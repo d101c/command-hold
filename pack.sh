@@ -11,7 +11,7 @@ gnome-extensions pack "$SRC" \
   --extra-source=actions.js --extra-source=commander.js --extra-source=confirmDialog.js \
   --extra-source=dispatch.js --extra-source=engine.js --extra-source=holdMachine.js \
   --extra-source=hud.js --extra-source=keyHook.js --extra-source=panelIndicator.js \
-  --extra-source=voice.js \
+  --extra-source=voice.js --extra-source=setup.js --extra-source=setupPage.js \
   "${PODIR[@]}" --schema="$SCHEMA" --out-dir="$REPO" --force
 ( cd "$SRC" && zip -r -q "$ZIP" icons )
 echo "Built: $ZIP"

@@ -369,3 +369,129 @@ msgstr "Niveau du micro, mots entendus et résultat, à côté du curseur."
 
 msgid "Top-bar indicator"
 msgstr "Indicateur dans la barre supérieure"
+
+msgid "Not installed"
+msgstr "Non installé"
+
+msgid "Installation"
+msgstr "Installation"
+
+msgid "Checking what is installed…"
+msgstr "Vérification de ce qui est installé…"
+
+msgid "Everything stays on this computer"
+msgstr "Tout reste sur cet ordinateur"
+
+msgid "The pieces below are downloaded and unpacked into your home folder by this window: no terminal, no administrator password. Sizes are what you will download."
+msgstr "Les éléments ci-dessous sont téléchargés et décompressés dans votre dossier personnel par cette fenêtre : pas de terminal, pas de mot de passe administrateur. Les tailles sont ce que vous téléchargerez."
+
+msgid "Speech engine (Voice Hold)"
+msgstr "Moteur vocal (Voice Hold)"
+
+msgid "Listens and transcribes offline: Python engine and models."
+msgstr "Écoute et transcrit hors-ligne : moteur Python et modèles."
+
+msgid "Command engine (Command Hold)"
+msgstr "Moteur de commandes (Command Hold)"
+
+msgid "Understands what you said and runs confirmed commands."
+msgstr "Comprend ce que vous avez dit et lance les commandes confirmées."
+
+msgid "Local language model (optional)"
+msgstr "Modèle de langue local (optionnel)"
+
+msgid "Ollama and a small model for open requests, such as shell commands. Without it, GNOME actions still work."
+msgstr "Ollama et un petit modèle pour les demandes ouvertes, comme les commandes shell. Sans lui, les actions GNOME marchent quand même."
+
+msgid "Install"
+msgstr "Installer"
+
+msgid "Installed another way (pipx or a venv): nothing to do"
+msgstr "Installé autrement (pipx ou un venv) : rien à faire"
+
+msgid "Installed"
+msgstr "Installé"
+
+msgid "Engine present, models missing"
+msgstr "Moteur présent, modèles manquants"
+
+msgid "(%s)"
+msgstr "(%s)"
+
+msgid "Installed (bundled Ollama, model ready)"
+msgstr "Installé (Ollama embarqué, modèle prêt)"
+
+msgid "Ollama is running on this computer and the model is present"
+msgstr "Ollama tourne sur cet ordinateur et le modèle est présent"
+
+msgid "Ollama is running; the model %s is missing"
+msgstr "Ollama tourne ; le modèle %s manque"
+
+msgid "Ollama bundle present but not running; the command engine starts it on demand"
+msgstr "Ollama embarqué présent mais arrêté ; le moteur de commandes le démarre à la demande"
+
+msgid "Try again"
+msgstr "Réessayer"
+
+msgid "Python 3 was not found on this computer (it comes with GNOME on every distribution)."
+msgstr "Python 3 est introuvable sur cet ordinateur (il accompagne GNOME sur toutes les distributions)."
+
+msgid "Your Python is %s; the engines need %s or newer."
+msgstr "Votre Python est en version %s ; les moteurs demandent %s ou plus récent."
+
+msgid "Installing… keep this window open."
+msgstr "Installation… gardez cette fenêtre ouverte."
+
+msgid "%d step(s) left: press Install on each row."
+msgstr "%d étape(s) restante(s) : appuyez sur Installer sur chaque ligne."
+
+msgid "Everything is installed. Log out and back in for the extension to see the engines."
+msgstr "Tout est installé. Déconnectez-vous et reconnectez-vous pour que l'extension voie les moteurs."
+
+msgid "Log out now"
+msgstr "Se déconnecter maintenant"
+
+msgid "Everything is installed."
+msgstr "Tout est installé."
+
+msgid "Could not fetch the installation list (offline?): %s"
+msgstr "Impossible de récupérer la liste d'installation (hors-ligne ?) : %s"
+
+msgid "Python 3 not found"
+msgstr "Python 3 introuvable"
+
+msgid "Cancelled"
+msgstr "Annulé"
+
+msgid "A downloaded file is corrupt (%s). Try again."
+msgstr "Un fichier téléchargé est corrompu (%s). Réessayez."
+
+msgid "Unsupported Python (%s)"
+msgstr "Python non pris en charge (%s)"
+
+msgid "Failed: %s"
+msgstr "Échec : %s"
+
+msgid "Downloading"
+msgstr "Téléchargement"
+
+msgid "Checking"
+msgstr "Vérification"
+
+msgid "Unpacking"
+msgstr "Décompression"
+
+msgid "Registering"
+msgstr "Enregistrement"
+
+msgid "Starting Ollama…"
+msgstr "Démarrage d'Ollama…"
+
+msgid "Install the command engine first: it starts Ollama"
+msgstr "Installez d'abord le moteur de commandes : c'est lui qui démarre Ollama"
+
+msgid "Ollama did not start"
+msgstr "Ollama n'a pas démarré"
+
+msgid "Everything runs on this computer: Voice Hold listens, command-hold-engine understands and runs confirmed commands, Ollama (optional) handles open requests. The Installation page installs all three for you; the commands below do the same by hand."
+msgstr "Tout tourne sur cet ordinateur : Voice Hold écoute, command-hold-engine comprend et lance les commandes confirmées, Ollama (optionnel) traite les demandes ouvertes. La page Installation installe les trois pour vous ; les commandes ci-dessous font la même chose à la main."

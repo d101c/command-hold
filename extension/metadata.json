@@ -2,9 +2,16 @@
   "uuid": "command-hold@griffit.gmail.com",
   "name": "Command Hold",
   "description": "Hold a key and say what to do. Offline voice commands for GNOME.\n\nHold the shortcut (Super+C by default), speak, release: \"open Firefox\", \"volume 50\", \"dark mode\", \"next workspace\", \"lock the screen\", \"screenshot\", \"Wi-Fi off\"… run at once. Anything else (\"clone the repo owner slash name\", \"update the system\", \"what is using my memory\") becomes a shell command that you see and confirm before it runs in a visible terminal; the pill then reports done or failed.\n\nEverything runs on your computer: speech recognition by the Voice Hold engine (French, English and 23 other languages), GNOME actions by rules, open requests by a small local LLM through Ollama (optional). No account, no cloud.\n\nRequires the separate command-hold-engine helper (Python, GPL, one command to install) and the Voice Hold engine; nothing works without them. The settings page shows the install commands, with a button that copies them to the clipboard, and the engine status. Wayland only.",
-  "shell-version": ["45", "46", "47", "48", "49", "50"],
+  "shell-version": [
+    "45",
+    "46",
+    "47",
+    "48",
+    "49",
+    "50"
+  ],
   "settings-schema": "org.gnome.shell.extensions.command-hold",
   "gettext-domain": "command-hold",
   "url": "https://github.com/d101c/command-hold",
-  "version-name": "0.1"
+  "version-name": "0.2"
 }

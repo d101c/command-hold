@@ -61,6 +61,9 @@ class CommandHoldInterface(ServiceInterface):
     def _warm_up(self):
         if not self._interpreter.use_llm:
             return
+        from . import ollama
+        if not llm.ping(self._interpreter.llm_url)[0] and ollama.bundled_binary():
+            ollama.ensure(self._interpreter.llm_url)
         ok, present = llm.ping(self._interpreter.llm_url, self._interpreter.llm_model)
         if ok and present and not llm.loaded(self._interpreter.llm_url, self._interpreter.llm_model):
             llm.warm_up(self._interpreter.llm_url, self._interpreter.llm_model)
@@ -122,6 +125,13 @@ class CommandHoldInterface(ServiceInterface):
             'apps': Variant('i', len(self._interpreter._rules.index.apps)),
             'jobs': Variant('i', len(self._runner.jobs)),
         }
+
+    @method()
+    async def EnsureOllama(self) -> 'b':
+        """Start the bundled Ollama (hold/ollama) when none answers."""
+        self._touch()
+        from . import ollama
+        return await self._loop.run_in_executor(None, ollama.ensure, self._interpreter.llm_url)
 
     @method()
     def ReloadApps(self):

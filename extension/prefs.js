@@ -7,6 +7,7 @@ import Pango from 'gi://Pango';
 
 import {ExtensionPreferences, gettext as _} from 'resource:///org/gnome/Shell/Extensions/js/extensions/prefs.js';
 import {engineStatus} from './engine.js';
+import {buildSetupPage} from './setupPage.js';
 
 const VOICE = {name: 'org.griffit.VoiceHold', path: '/org/griffit/VoiceHold', iface: 'org.griffit.VoiceHold'};
 const INSTALL_ENGINE = 'pipx install "git+https://github.com/d101c/command-hold#subdirectory=engine" && command-hold-engine install-service';
@@ -18,6 +19,12 @@ export default class CommandHoldPreferences extends ExtensionPreferences {
         const settings = this.getSettings();
         const page = new Adw.PreferencesPage({title: _('Command Hold'), icon_name: 'utilities-terminal-symbolic'});
         window.add(page);
+        const setup = buildSetupPage(window, _, {components: ['voice', 'command', 'llm']});
+        window.add(setup);
+        engineStatus().then(st => {
+            if (!st || st.error === 'not-installed')
+                window.set_visible_page(setup);
+        });
         this._buildEngineGroup(page, window, settings);
         this._buildGestureGroup(page, settings);
         this._buildLlmGroup(page, settings);
@@ -62,7 +69,7 @@ export default class CommandHoldPreferences extends ExtensionPreferences {
     _buildEngineGroup(page, window, settings) {
         const group = new Adw.PreferencesGroup({
             title: _('Engines'),
-            description: _('Everything runs on this computer: Voice Hold listens, command-hold-engine understands and runs confirmed commands, Ollama (optional) handles open requests.'),
+            description: _('Everything runs on this computer: Voice Hold listens, command-hold-engine understands and runs confirmed commands, Ollama (optional) handles open requests. The Installation page installs all three for you; the commands below do the same by hand.'),
         });
         page.add(group);
 
