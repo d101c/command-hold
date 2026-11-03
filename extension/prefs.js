@@ -2,11 +2,13 @@ import Adw from 'gi://Adw';
 import Gdk from 'gi://Gdk';
 import Gio from 'gi://Gio';
 import GLib from 'gi://GLib';
+import GObject from 'gi://GObject';
 import Gtk from 'gi://Gtk';
 import Pango from 'gi://Pango';
 
 import {ExtensionPreferences, gettext as _} from 'resource:///org/gnome/Shell/Extensions/js/extensions/prefs.js';
 import {engineStatus} from './engine.js';
+import {listSources} from './voice.js';
 import {buildSetupPage} from './setupPage.js';
 
 const VOICE = {name: 'org.griffit.VoiceHold', path: '/org/griffit/VoiceHold', iface: 'org.griffit.VoiceHold'};
@@ -27,6 +29,7 @@ export default class CommandHoldPreferences extends ExtensionPreferences {
         });
         this._buildEngineGroup(page, window, settings);
         this._buildGestureGroup(page, settings);
+        this._buildMicrophoneGroup(page, settings);
         this._buildLlmGroup(page, settings);
         this._buildAppearanceGroup(page, settings);
     }
@@ -203,12 +206,74 @@ export default class CommandHoldPreferences extends ExtensionPreferences {
 
     // -- appearance -------------------------------------------------------------
 
+    // -- microphone -------------------------------------------------------
+
+    _buildMicrophoneGroup(page, settings) {
+        const group = new Adw.PreferencesGroup({
+            title: _('Microphone'),
+            description: _('Which input the Voice Hold engine records from. "System default" follows Settings → Sound → Input.'),
+        });
+        page.add(group);
+
+        const row = new Adw.ComboRow({title: _('Microphone'), subtitle: _('Checking…')});
+        const refresh = new Gtk.Button({icon_name: 'view-refresh-symbolic', valign: Gtk.Align.CENTER, tooltip_text: _('Check again')});
+        refresh.add_css_class('flat');
+        row.add_suffix(refresh);
+        group.add(row);
+
+        let names = [];
+        let syncing = false;
+        const fill = () => {
+            row.set_subtitle(_('Checking…'));
+            listSources().then(sources => {
+                const current = settings.get_string('microphone');
+                const def = sources.find(s => s.default);
+                const labels = [def ? _('System default (%s)').format(def.description) : _('System default')];
+                names = [''];
+                for (const s of sources) {
+                    labels.push(s.description);
+                    names.push(s.name);
+                }
+                if (current && !names.includes(current)) {
+                    labels.push(_('%s (not connected)').format(current));
+                    names.push(current);
+                }
+                syncing = true;
+                row.set_model(Gtk.StringList.new(labels));
+                row.set_selected(Math.max(0, names.indexOf(current)));
+                syncing = false;
+                row.set_subtitle(sources.length ? '' : _('Voice Hold engine not reachable — the system default will be used'));
+            });
+        };
+        row.connect('notify::selected', () => {
+            if (syncing || row.get_selected() >= names.length)
+                return;
+            const name = names[row.get_selected()];
+            if (settings.get_string('microphone') !== name)
+                settings.set_string('microphone', name);
+        });
+        refresh.connect('clicked', fill);
+        fill();
+    }
+
+    // -- appearance -------------------------------------------------------
+
     _buildAppearanceGroup(page, settings) {
         const group = new Adw.PreferencesGroup({title: _('Appearance')});
         page.add(group);
-        const hud = new Adw.SwitchRow({title: _('Show the pill'), subtitle: _('Microphone level, words heard and the result, next to the cursor.')});
+        const hud = new Adw.SwitchRow({title: _('Show the pill'), subtitle: _('Microphone level, words heard and the result.')});
         group.add(hud);
         settings.bind('show-hud', hud, 'active', Gio.SettingsBindFlags.DEFAULT);
+        const positions = ['island', 'cursor'];
+        const pos = new Adw.ComboRow({
+            title: _('Pill position'),
+            subtitle: _('Island: slides out from under the top bar, centred. Cursor: next to the text cursor or the pointer.'),
+            model: Gtk.StringList.new([_('Island under the top bar'), _('Next to the cursor')]),
+        });
+        pos.set_selected(Math.max(0, positions.indexOf(settings.get_string('hud-position'))));
+        pos.connect('notify::selected', () => settings.set_string('hud-position', positions[pos.get_selected()] ?? 'island'));
+        hud.bind_property('active', pos, 'sensitive', GObject.BindingFlags.SYNC_CREATE);
+        group.add(pos);
         const ind = new Adw.SwitchRow({title: _('Top-bar indicator')});
         group.add(ind);
         settings.bind('show-indicator', ind, 'active', Gio.SettingsBindFlags.DEFAULT);

@@ -58,7 +58,18 @@
     <key name="show-hud" type="b">
       <default>true</default>
       <summary>Show the pill</summary>
-      <description>Show the microphone level, the words heard and the result next to the cursor.</description>
+      <description>Show the microphone level, the words heard and the result.</description>
+    </key>
+    <key name="hud-position" type="s">
+      <choices><choice value="island"/><choice value="cursor"/></choices>
+      <default>'island'</default>
+      <summary>Pill position</summary>
+      <description>island: a capsule that slides out from under the top bar, centred. cursor: next to the text cursor or the pointer.</description>
+    </key>
+    <key name="microphone" type="s">
+      <default>''</default>
+      <summary>Microphone</summary>
+      <description>PipeWire node name of the microphone to record from. Empty = the system default input.</description>
     </key>
   </schema>
 </schemalist>

@@ -114,6 +114,31 @@ export class VoiceClient {
     }
 }
 
+// Microphones known to the Voice Hold engine, for the preferences:
+// [{name, description, default}], or [] when the engine cannot be reached.
+export function listSources(cancellable = null) {
+    return new Promise(resolve => {
+        try {
+            Gio.DBus.session.call(BUS_NAME, OBJECT_PATH, INTERFACE, 'ListSources', null,
+                new GLib.VariantType('(aa{sv})'), Gio.DBusCallFlags.NONE, CALL_TIMEOUT_MS, cancellable,
+                (conn, res) => {
+                    try {
+                        const [list] = conn.call_finish(res).deepUnpack();
+                        resolve(list.map(d => ({
+                            name: d.name?.deepUnpack() ?? '',
+                            description: d.description?.deepUnpack() ?? '',
+                            default: d.default?.deepUnpack() ?? false,
+                        })));
+                    } catch {
+                        resolve([]);
+                    }
+                });
+        } catch {
+            resolve([]);
+        }
+    });
+}
+
 // Shared by voice.js and engine.js: a short code for an error, or
 // `error: message`.
 export function classifyError(e, who, log = true) {

@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720" font-family="Cantarell, Noto Sans, sans-serif">
+  <defs>
+    <filter id="sh" x="-10%" y="-10%" width="120%" height="130%"><feDropShadow dx="0" dy="20" stdDeviation="22" flood-color="#000" flood-opacity="0.55"/></filter>
+    <filter id="sh2" x="-10%" y="-20%" width="120%" height="160%"><feDropShadow dx="0" dy="8" stdDeviation="10" flood-color="#000" flood-opacity="0.35"/></filter>
+  </defs>
+  <rect width="1280" height="720" fill="#1e1e1e"/>
+  <!-- top bar -->
+  <rect x="0" y="0" width="1280" height="34" fill="#000"/>
+  <text x="640" y="23" text-anchor="middle" font-size="14" font-weight="600" fill="#eee">Nov 3  14:32</text>
+  <g transform="translate(1120,9) scale(1.0)" fill="#eee">
+    <rect x="5" y="1" width="6" height="9" rx="3"/>
+    <path d="M3 7.5a5 5 0 0 0 10 0h-1.5a3.5 3.5 0 0 1-7 0z"/>
+    <path d="M18 5l3 3-3 3" fill="none" stroke="#eee" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+  <!-- confirmation dialog -->
+  <g filter="url(#sh)"><rect x="340" y="180" width="600" height="300" rx="16" fill="#303030"/></g>
+  <text x="640" y="236" text-anchor="middle" font-size="24" font-weight="700" fill="#f6f5f4">Run this command?</text>
+  <text x="640" y="268" text-anchor="middle" font-size="15" fill="#b0b0b0">“clone the repo d101c slash command-hold”</text>
+  <rect x="372" y="292" width="536" height="56" rx="10" fill="#1b1b1b"/>
+  <text x="392" y="327" font-size="17" font-family="Source Code Pro, DejaVu Sans Mono, monospace" fill="#8ff0a4">git clone https://github.com/d101c/command-hold</text>
+  <text x="640" y="382" text-anchor="middle" font-size="14" fill="#9a9a9a">Runs in a visible terminal, in ~/</text>
+  <rect x="372" y="412" width="258" height="44" rx="10" fill="#444"/>
+  <text x="501" y="440" text-anchor="middle" font-size="16" fill="#f6f5f4">Cancel</text>
+  <rect x="650" y="412" width="258" height="44" rx="10" fill="#3584e4"/>
+  <text x="779" y="440" text-anchor="middle" font-size="16" font-weight="600" fill="#fff">Run</text>
+  <!-- pill -->
+  <g filter="url(#sh2)"><rect x="380" y="540" width="520" height="46" rx="12" fill="#282828" fill-opacity="0.95"/></g>
+  <g transform="translate(396,553) scale(1.25)" fill="#3584e4">
+    <rect x="5" y="1" width="6" height="9" rx="3"/>
+    <path d="M3 7.5a5 5 0 0 0 10 0h-1.5a3.5 3.5 0 0 1-7 0z"/>
+    <path d="M18 5l3 3-3 3" fill="none" stroke="#3584e4" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+  <g fill="#3584e4">
+    <rect x="440" y="559" width="5" height="8" rx="2.5"/>
+    <rect x="449" y="556" width="5" height="14" rx="2.5"/>
+    <rect x="458" y="552" width="5" height="22" rx="2.5"/>
+    <rect x="467" y="554.5" width="5" height="17" rx="2.5"/>
+    <rect x="476" y="551" width="5" height="24" rx="2.5"/>
+    <rect x="485" y="557" width="5" height="12" rx="2.5"/>
+    <rect x="494" y="559.5" width="5" height="7" rx="2.5"/>
+  </g>
+  <text x="514" y="570" font-size="18" fill="#ffffff">clone the repo d101c slash command-hold</text>
+  <text x="640" y="660" text-anchor="middle" font-size="20" fill="#9a9a9a">Hold Super+C and say what to do — GNOME actions run at once, shell commands are confirmed first</text>
+</svg>

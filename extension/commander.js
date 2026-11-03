@@ -41,7 +41,7 @@ export class Commander {
         this._settings = settings;
         this._ = gettext || (s => s);
         this._machine = new HoldMachine(this._machineOptions());
-        this._hud = new Hud(iconPath, this._);
+        this._hud = new Hud(iconPath, this._, () => this._settings.get_string('hud-position'));
         this._actions = new Actions(this._);
         this._voice = new VoiceClient({
             Owner: has => this._onVoiceOwner(has),
@@ -144,7 +144,7 @@ export class Commander {
         this._session = session;
         if (this._settings.get_boolean('show-hud'))
             this._hud.show(this._('Starting…'), 'loading');
-        this._voice.start({'silence-stop-s': 0}).then(err => {
+        this._voice.start({'silence-stop-s': 0, 'source': this._settings.get_string('microphone')}).then(err => {
             if (!err || this._session !== session || session.ending)
                 return;
             this._run(this._machine.external('engine'));

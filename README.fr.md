@@ -72,8 +72,10 @@ terminal (Ptyxis, Console ou GNOME Terminal).
 ## Réglages
 
 Raccourci (modificateur obligatoire), mode de geste, seuil d'appui, délai de
-silence, LLM on/off, modèle, URL d'Ollama, dossier de travail des commandes,
-pastille et indicateur. Le menu de la barre bascule le raccourci et le LLM et
+silence, micro (les entrées du moteur Voice Hold, défaut système par défaut),
+LLM on/off, modèle, URL d'Ollama, dossier de travail des commandes, pastille
+(îlot qui sort de sous la barre supérieure, ou à côté du curseur) et
+indicateur. Le menu de la barre bascule le raccourci et le LLM et
 montre l'état du moteur sans le démarrer.
 
 ## Sécurité

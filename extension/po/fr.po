@@ -364,8 +364,38 @@ msgstr "Apparence"
 msgid "Show the pill"
 msgstr "Afficher la pastille"
 
-msgid "Microphone level, words heard and the result, next to the cursor."
-msgstr "Niveau du micro, mots entendus et résultat, à côté du curseur."
+msgid "Microphone level, words heard and the result."
+msgstr "Niveau du micro, mots entendus et résultat."
+
+msgid "Pill position"
+msgstr "Position de la pastille"
+
+msgid "Island: slides out from under the top bar, centred. Cursor: next to the text cursor or the pointer."
+msgstr "Îlot : sort de sous la barre supérieure, centré. Curseur : à côté du curseur de texte ou du pointeur."
+
+msgid "Island under the top bar"
+msgstr "Îlot sous la barre supérieure"
+
+msgid "Next to the cursor"
+msgstr "À côté du curseur"
+
+msgid "Microphone"
+msgstr "Micro"
+
+msgid "Which input the Voice Hold engine records from. \"System default\" follows Settings → Sound → Input."
+msgstr "L'entrée que le moteur Voice Hold enregistre. « Défaut système » suit Réglages → Son → Entrée."
+
+msgid "System default (%s)"
+msgstr "Défaut système (%s)"
+
+msgid "System default"
+msgstr "Défaut système"
+
+msgid "%s (not connected)"
+msgstr "%s (non branché)"
+
+msgid "Voice Hold engine not reachable — the system default will be used"
+msgstr "Moteur Voice Hold injoignable — le micro par défaut sera utilisé"
 
 msgid "Top-bar indicator"
 msgstr "Indicateur dans la barre supérieure"
