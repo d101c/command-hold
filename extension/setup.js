@@ -17,7 +17,7 @@ import Soup from 'gi://Soup?version=3.0';
 //   voice-hold/models/     speech models (where voice-hold-engine looks)
 //   dbus-1/services/       org.griffit.VoiceHold.service, org.griffit.CommandHold.service
 
-export const MANIFEST_URL = 'https://raw.githubusercontent.com/d101c/hold-setup/main/manifest.json';
+export const MANIFEST_URL = 'https://raw.githubusercontent.com/d101c/hold-setup/master/manifest.json';
 const CHUNK = 256 * 1024;
 
 export function dataDir() {
