@@ -1,0 +1,371 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: command-hold 0.1\n"
+"Language: fr\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+
+msgid "No application \"%s\""
+msgstr "Aucune application « %s »"
+
+msgid "Opening %s"
+msgstr "Ouverture de %s"
+
+msgid "No window to close"
+msgstr "Aucune fenêtre à fermer"
+
+msgid "Closing %s"
+msgstr "Fermeture de %s"
+
+msgid "Closing %d windows"
+msgstr "Fermeture de %d fenêtres"
+
+msgid "No sound output"
+msgstr "Aucune sortie son"
+
+msgid "Which volume?"
+msgstr "Quel volume ?"
+
+msgid "Sound muted"
+msgstr "Son coupé"
+
+msgid "Volume %d%%"
+msgstr "Volume %d %%"
+
+msgid "Brightness is not adjustable on this screen"
+msgstr "Luminosité non réglable sur cet écran"
+
+msgid "Which brightness?"
+msgstr "Quelle luminosité ?"
+
+msgid "Brightness %d%%"
+msgstr "Luminosité %d %%"
+
+msgid "Dark mode on"
+msgstr "Mode sombre activé"
+
+msgid "Light mode on"
+msgstr "Mode clair activé"
+
+msgid "Do not disturb on"
+msgstr "Ne pas déranger activé"
+
+msgid "Notifications back on"
+msgstr "Notifications réactivées"
+
+msgid "Wi‑Fi on"
+msgstr "Wi‑Fi activé"
+
+msgid "Wi‑Fi off"
+msgstr "Wi‑Fi coupé"
+
+msgid "Bluetooth on"
+msgstr "Bluetooth activé"
+
+msgid "Bluetooth off"
+msgstr "Bluetooth coupé"
+
+msgid "No such workspace"
+msgstr "Cet espace de travail n'existe pas"
+
+msgid "Workspace %d"
+msgstr "Espace de travail %d"
+
+msgid "Select an area"
+msgstr "Sélectionnez une zone"
+
+msgid "Saved %s"
+msgstr "Enregistré : %s"
+
+msgid "Locking"
+msgstr "Verrouillage"
+
+msgid "Unknown power action"
+msgstr "Action d'alimentation inconnue"
+
+msgid "Starting…"
+msgstr "Démarrage…"
+
+msgid "…"
+msgstr "…"
+
+msgid "Listening — press again or Esc to stop"
+msgstr "À l'écoute — appuyez encore ou Échap pour arrêter"
+
+msgid "Listening — release to run"
+msgstr "À l'écoute — relâchez pour exécuter"
+
+msgid "Voice engine stopped unexpectedly"
+msgstr "Le moteur vocal s'est arrêté brutalement"
+
+msgid "Loading the model… speak, nothing is lost"
+msgstr "Chargement du modèle… parlez, rien n'est perdu"
+
+msgid "Nothing heard"
+msgstr "Rien entendu"
+
+msgid "Microphone unavailable"
+msgstr "Micro indisponible"
+
+msgid "Voice Hold engine not installed — see the settings"
+msgstr "Moteur Voice Hold non installé — voir les réglages"
+
+msgid "Voice Hold engine failed to start — see the settings"
+msgstr "Le moteur Voice Hold n'a pas démarré — voir les réglages"
+
+msgid "Speech models missing — run: voice-hold-engine setup"
+msgstr "Modèles vocaux manquants — lancez : voice-hold-engine setup"
+
+msgid "Voice engine did not answer"
+msgstr "Le moteur vocal ne répond pas"
+
+msgid "Voice engine busy — a dictation is running"
+msgstr "Moteur vocal occupé — une dictée est en cours"
+
+msgid "D-Bus unavailable"
+msgstr "D-Bus indisponible"
+
+msgid "Thinking…"
+msgstr "Réflexion…"
+
+msgid "Done"
+msgstr "Fait"
+
+msgid "Refused: %s"
+msgstr "Refusé : %s"
+
+msgid "Suspend"
+msgstr "Mettre en veille"
+
+msgid "Restart"
+msgstr "Redémarrer"
+
+msgid "Power off"
+msgstr "Éteindre"
+
+msgid "Log out"
+msgstr "Fermer la session"
+
+msgid "Command Hold heard: “%s”"
+msgstr "Command Hold a entendu : « %s »"
+
+msgid "Run"
+msgstr "Exécuter"
+
+msgid "Cancel"
+msgstr "Annuler"
+
+msgid "Warning: this %s."
+msgstr "Attention : cette commande %s."
+
+msgid "Running…"
+msgstr "En cours…"
+
+msgid "Not a GNOME action, and the local LLM is off — “%s”"
+msgstr "Pas une action GNOME, et le LLM local est éteint — « %s »"
+
+msgid "Not a GNOME action, and Ollama is not answering — “%s”"
+msgstr "Pas une action GNOME, et Ollama ne répond pas — « %s »"
+
+msgid "OK"
+msgstr "OK"
+
+msgid "Not understood: “%s”"
+msgstr "Pas compris : « %s »"
+
+msgid "Command engine stopped unexpectedly"
+msgstr "Le moteur de commandes s'est arrêté brutalement"
+
+msgid "Done ✓%s"
+msgstr "Terminé ✓%s"
+
+msgid "Failed ✗ (exit %d)%s"
+msgstr "Échec ✗ (code %d)%s"
+
+msgid "Command engine not installed — see the settings"
+msgstr "Moteur de commandes non installé — voir les réglages"
+
+msgid "Command engine failed to start — see the settings"
+msgstr "Le moteur de commandes n'a pas démarré — voir les réglages"
+
+msgid "No terminal found (install Ptyxis or GNOME Terminal)"
+msgstr "Aucun terminal trouvé (installez Ptyxis ou GNOME Terminal)"
+
+msgid "Command engine did not answer"
+msgstr "Le moteur de commandes ne répond pas"
+
+msgid "Command Hold"
+msgstr "Command Hold"
+
+msgid "Enabled"
+msgstr "Activé"
+
+msgid "Local LLM for open requests"
+msgstr "LLM local pour les demandes ouvertes"
+
+msgid "Engine: checking…"
+msgstr "Moteur : vérification…"
+
+msgid "Preferences"
+msgstr "Réglages"
+
+msgid "Engine: not running (starts on the first command)"
+msgstr "Moteur : arrêté (démarre à la première commande)"
+
+msgid "Engine: %s"
+msgstr "Moteur : %s"
+
+msgid "Engine %s — Ollama %s, terminal %s"
+msgstr "Moteur %s — Ollama %s, terminal %s"
+
+msgid "ready"
+msgstr "prêt"
+
+msgid "model missing"
+msgstr "modèle manquant"
+
+msgid "off"
+msgstr "éteint"
+
+msgid "none"
+msgstr "aucun"
+
+msgid "Copy"
+msgstr "Copier"
+
+msgid "Copied"
+msgstr "Copié"
+
+msgid "Checking…"
+msgstr "Vérification…"
+
+msgid "Check again"
+msgstr "Vérifier à nouveau"
+
+msgid "Engines"
+msgstr "Moteurs"
+
+msgid "Command engine"
+msgstr "Moteur de commandes"
+
+msgid "Not installed — run the first command below, then check again"
+msgstr "Non installé — lancez la première commande ci-dessous, puis vérifiez à nouveau"
+
+msgid "Installed but failed to start: %s"
+msgstr "Installé mais n'a pas démarré : %s"
+
+msgid "Ready — engine %s"
+msgstr "Prêt — moteur %s"
+
+msgid "terminal: %s"
+msgstr "terminal : %s"
+
+msgid "no terminal found (install Ptyxis)"
+msgstr "aucun terminal trouvé (installez Ptyxis)"
+
+msgid "Ollama ready (%s)"
+msgstr "Ollama prêt (%s)"
+
+msgid "Ollama up, model %s missing"
+msgstr "Ollama actif, modèle %s manquant"
+
+msgid "Ollama not running"
+msgstr "Ollama arrêté"
+
+msgid "Voice Hold engine"
+msgstr "Moteur Voice Hold"
+
+msgid "Install the command engine"
+msgstr "Installer le moteur de commandes"
+
+msgid "Install the Voice Hold engine"
+msgstr "Installer le moteur Voice Hold"
+
+msgid "Install Ollama and the model (optional)"
+msgstr "Installer Ollama et le modèle (optionnel)"
+
+msgid "Ready — engine %s, models installed"
+msgstr "Prêt — moteur %s, modèles installés"
+
+msgid "Engine %s found, models missing — run: voice-hold-engine setup"
+msgstr "Moteur %s trouvé, modèles manquants — lancez : voice-hold-engine setup"
+
+msgid "Not installed — run the second command below, then check again"
+msgstr "Non installé — lancez la deuxième commande ci-dessous, puis vérifiez à nouveau"
+
+msgid "Everything runs on this computer: Voice Hold listens, command-hold-engine understands and runs confirmed commands, Ollama (optional) handles open requests."
+msgstr "Tout tourne sur cet ordinateur : Voice Hold écoute, command-hold-engine comprend et lance les commandes confirmées, Ollama (optionnel) traite les demandes ouvertes."
+
+msgid "Gesture"
+msgstr "Geste"
+
+msgid "Hold the shortcut and say what to do; release to run. A quick tap keeps listening hands-free."
+msgstr "Maintenez le raccourci et dites quoi faire ; relâchez pour exécuter. Un appui bref garde l'écoute mains libres."
+
+msgid "Mode"
+msgstr "Mode"
+
+msgid "Auto: hold or tap. Hold: release always stops. Toggle: the shortcut starts and stops."
+msgstr "Auto : maintien ou appui. Maintien : relâcher arrête toujours. Bascule : le raccourci démarre et arrête."
+
+msgid "Hold or tap"
+msgstr "Maintien ou appui"
+
+msgid "Hold only"
+msgstr "Maintien seul"
+
+msgid "Toggle only"
+msgstr "Bascule seule"
+
+msgid "Tap threshold (ms)"
+msgstr "Seuil d'appui (ms)"
+
+msgid "Stop after silence (s)"
+msgstr "Arrêt après silence (s)"
+
+msgid "Hands-free mode only. 0 = never."
+msgstr "Mode mains libres seulement. 0 = jamais."
+
+msgid "Shortcut"
+msgstr "Raccourci"
+
+msgid "Not set"
+msgstr "Non défini"
+
+msgid "Set shortcut"
+msgstr "Définir le raccourci"
+
+msgid "Press the new shortcut, with a modifier (Super, Ctrl, Alt).\nEscape cancels, Backspace clears."
+msgstr "Appuyez sur le nouveau raccourci, avec un modificateur (Super, Ctrl, Alt).\nÉchap annule, Retour arrière efface."
+
+msgid "Open requests"
+msgstr "Demandes ouvertes"
+
+msgid "GNOME actions are recognised by rules, instantly. Anything else (shell commands, questions) goes to a small local LLM through Ollama. Every command is shown and confirmed before it runs, in a visible terminal."
+msgstr "Les actions GNOME sont reconnues par des règles, instantanément. Tout le reste (commandes shell, questions) passe par un petit LLM local via Ollama. Chaque commande est affichée et confirmée avant de tourner, dans un terminal visible."
+
+msgid "Use the local LLM"
+msgstr "Utiliser le LLM local"
+
+msgid "Model"
+msgstr "Modèle"
+
+msgid "Ollama URL"
+msgstr "URL d'Ollama"
+
+msgid "Working folder for commands (empty = home)"
+msgstr "Dossier de travail des commandes (vide = dossier personnel)"
+
+msgid "Appearance"
+msgstr "Apparence"
+
+msgid "Show the pill"
+msgstr "Afficher la pastille"
+
+msgid "Microphone level, words heard and the result, next to the cursor."
+msgstr "Niveau du micro, mots entendus et résultat, à côté du curseur."
+
+msgid "Top-bar indicator"
+msgstr "Indicateur dans la barre supérieure"

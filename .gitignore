@@ -1,0 +1,11 @@
+*.shell-extension.zip
+extension/schemas/gschemas.compiled
+extension/locale/
+__pycache__/
+.pytest_cache/
+engine/.venv/
+engine/dist/
+engine/*.egg-info/
+*.swp
+tools/headless/env/
+tools/headless/frames/

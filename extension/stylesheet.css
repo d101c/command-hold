@@ -1,0 +1,30 @@
+/* Same family as Accent Hold and Voice Hold: dark pill, 12px radius. */
+.command-hud {
+    background-color: rgba(40,40,40,0.95);
+    border-radius: 12px;
+    padding: 8px 12px;
+    spacing: 10px;
+    color: #fff;
+}
+.command-hud-icon { icon-size: 16px; color: #ddd; }
+.command-hud-icon:loading { color: #999; }
+.command-hud-icon:listening { color: #3584e4; }
+.command-hud-icon:error { color: #e01b24; }
+.command-hud-bars { spacing: 3px; height: 20px; }
+.command-hud-bar { width: 4px; border-radius: 2px; background-color: #3584e4; }
+.command-hud-bar:quiet { background-color: rgba(255,255,255,0.25); }
+.command-hud-text { font-size: 14px; color: #ddd; max-width: 520px; }
+.command-hud-text:live { color: #fff; }
+.command-hud-text:hint { font-size: 12px; color: #aaa; }
+
+.command-hold-dialog-content { spacing: 12px; min-width: 420px; max-width: 720px; }
+.command-hold-dialog-title { font-size: 13px; color: #aaa; }
+.command-hold-dialog-command {
+    font-family: monospace;
+    font-size: 14px;
+    color: #fff;
+    background-color: rgba(0,0,0,0.35);
+    border-radius: 8px;
+    padding: 10px 12px;
+}
+.command-hold-dialog-warning { font-size: 12px; color: #f8e45c; }

@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schemalist>
+  <schema id="org.gnome.shell.extensions.command-hold"
+          path="/org/gnome/shell/extensions/command-hold/">
+    <key name="command-shortcut" type="as">
+      <default>['&lt;Super&gt;c']</default>
+      <summary>Command shortcut</summary>
+      <description>Hold it and say what to do; tap it for hands-free listening.</description>
+    </key>
+    <key name="enabled" type="b">
+      <default>true</default>
+      <summary>Enabled</summary>
+      <description>Enable or disable the shortcut.</description>
+    </key>
+    <key name="mode" type="s">
+      <choices><choice value="auto"/><choice value="hold"/><choice value="toggle"/></choices>
+      <default>'auto'</default>
+      <summary>Gesture</summary>
+      <description>auto: hold the modifier or tap. hold: release always stops. toggle: the shortcut starts and stops.</description>
+    </key>
+    <key name="tap-ms" type="i">
+      <default>350</default>
+      <range min="150" max="1000"/>
+      <summary>Tap threshold</summary>
+      <description>Releasing the modifier within this many milliseconds counts as a tap.</description>
+    </key>
+    <key name="silence-stop-s" type="d">
+      <default>4.0</default>
+      <range min="0" max="60"/>
+      <summary>Stop after silence</summary>
+      <description>In hands-free mode, stop listening after this many seconds of silence. 0 = never.</description>
+    </key>
+    <key name="llm" type="b">
+      <default>true</default>
+      <summary>Use the local LLM</summary>
+      <description>Send requests the rules do not understand (shell commands, questions) to Ollama on this computer.</description>
+    </key>
+    <key name="llm-model" type="s">
+      <default>'qwen3:1.7b'</default>
+      <summary>Ollama model</summary>
+      <description>Model name as listed by `ollama list`.</description>
+    </key>
+    <key name="llm-url" type="s">
+      <default>'http://127.0.0.1:11434'</default>
+      <summary>Ollama URL</summary>
+      <description>Base URL of the Ollama server.</description>
+    </key>
+    <key name="work-dir" type="s">
+      <default>''</default>
+      <summary>Working folder for shell commands</summary>
+      <description>Where confirmed commands run. Empty = the home folder.</description>
+    </key>
+    <key name="show-indicator" type="b">
+      <default>true</default>
+      <summary>Top-bar indicator</summary>
+      <description>Show an icon and menu in the GNOME Shell top bar.</description>
+    </key>
+    <key name="show-hud" type="b">
+      <default>true</default>
+      <summary>Show the pill</summary>
+      <description>Show the microphone level, the words heard and the result next to the cursor.</description>
+    </key>
+  </schema>
+</schemalist>

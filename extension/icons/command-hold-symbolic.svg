@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
+  <!-- Command Hold: a microphone with a terminal chevron. Filled shapes only (St recolours fill). -->
+  <rect x="2" y="1" width="6" height="9" rx="3" fill="currentColor"/>
+  <path d="M0.5 7.5a4.5 4.5 0 0 0 9 0h-1.5a3 3 0 0 1-6 0z" fill="currentColor"/>
+  <rect x="4.25" y="12" width="1.5" height="2.5" fill="currentColor"/>
+  <rect x="2.5" y="14.2" width="5" height="1.2" rx=".6" fill="currentColor"/>
+  <path d="M10.2 5.2 L13.4 8 L10.2 10.8 L10.2 9.2 L11.6 8 L10.2 6.8 Z" fill="currentColor"/>
+  <rect x="11.5" y="12" width="4" height="1.4" rx=".7" fill="currentColor"/>
+</svg>
