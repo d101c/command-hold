@@ -337,8 +337,12 @@ export class Installer {
         for (let i = 0; i < models.length; i++) {
             const item = models[i];
             if (item.extract) {
-                this.progress({step: 'extract', label: item.name, fraction: 0.9 + 0.08 * i / models.length});
-                await extract(archives[i], this.p.models, null, this.cancellable);
+                // bzip2 is slow (about 90 s for the speech model): keep the bar moving.
+                const start = 0.9 + 0.08 * i / models.length;
+                this.progress({step: 'extract', label: item.name, fraction: start});
+                await extract(archives[i], this.p.models, (files, total) => {
+                    this.progress({step: 'extract', label: item.name, fraction: start + 0.08 / models.length * (total ? files / total : 0)});
+                }, this.cancellable);
                 GLib.unlink(archives[i]);
             } else {
                 const dest = Gio.File.new_for_path(GLib.build_filenamev([this.p.models, item.name]));
