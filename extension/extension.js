@@ -52,7 +52,8 @@ export default class CommandHoldExtension extends Extension {
         if (this._indicator)
             return;
         this._indicator = addIndicator(this.uuid, this._settings,
-            `${this.path}/icons/command-hold-symbolic.svg`, () => this.openPreferences(), _);
+            `${this.path}/icons/command-hold-symbolic.svg`, () => this.openPreferences(), _,
+            entry => this._commander?.recall(entry));
     }
 
     _removeIndicator() {

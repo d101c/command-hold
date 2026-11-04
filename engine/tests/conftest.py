@@ -1,5 +1,12 @@
 import pytest
 
+
+@pytest.fixture(autouse=True)
+def _isolated_state(tmp_path, monkeypatch):
+    """No test touches the real history or runtime files."""
+    monkeypatch.setenv('XDG_STATE_HOME', str(tmp_path / 'state'))
+    monkeypatch.setenv('XDG_RUNTIME_DIR', str(tmp_path / 'run'))
+
 # A fixed set of "installed" applications so the tests do not depend on the
 # machine they run on.
 FAKE_APPS = [

@@ -72,18 +72,26 @@ Requires GNOME Shell 45–50 on Wayland, PipeWire, Python ≥ 3.12, and a termin
 
 Shortcut (a modifier is required), gesture mode, tap threshold, silence
 timeout, microphone (the Voice Hold engine's inputs, system default by
-default), LLM on/off, model, Ollama URL, working folder for commands, pill
-(an island that slides out from under the top bar, or next to the cursor)
-and top-bar indicator. The panel menu toggles the shortcut and the LLM and shows
-the engine state without starting it.
+default), LLM on/off, model, Ollama URL, working folder for commands, spoken
+answers (off by default; voices installed with `voice-hold-engine setup --tts`,
+French and English, ~65 MB each; a command's output is first summarised by
+the LLM into one sentence, ≈ 5 s), pill (an island that swells out of the
+top bar, or next to the cursor) and top-bar indicator.
+
+The pill shows a command's output on several lines, scrollable when long;
+click it to dismiss. The panel menu toggles the shortcut and the LLM, lists
+the last five requests (click one to see it again with what it produced)
+and shows the engine state without starting it.
 
 ## Security
 
 The helper listens on the session bus without authentication, like every
 session service: any process running as you can call it. It only runs what
 the extension has shown and you have confirmed; refused commands are refused
-whoever calls. Commands that ran are logged in
-`~/.local/state/command-hold/history.log`. Brightness works on the internal
+whoever calls; read-only commands are checked again by the helper before
+they run silently. Requests and what came of them are kept in
+`~/.local/state/command-hold/history.jsonl` (last 200), confirmed commands
+also in `history.log`. Brightness works on the internal
 screen only. Super alone cannot be the shortcut (it is Mutter's overlay key).
 
 ## Development

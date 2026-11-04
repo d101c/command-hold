@@ -1,7 +1,8 @@
 /* Same family as Accent Hold and Voice Hold. The capsule (.command-hud) is
    animated and clips; the content box carries the padding and spacing. */
 .command-hud { color: #fff; }
-.command-hud-content { padding: 8px 12px; spacing: 10px; }
+.command-hud-content { padding: 8px 12px; spacing: 8px; }
+.command-hud-row { spacing: 10px; }
 
 /* Next to the cursor: the dark pill of Voice Hold. */
 .command-hud-cursor {
@@ -16,7 +17,8 @@
     border-radius: 0 0 22px 22px;
     box-shadow: 0 5px 16px rgba(0,0,0,0.45);
 }
-.command-hud-content-island { padding: 10px 20px 11px 20px; spacing: 12px; }
+.command-hud-content-island { padding: 10px 20px 11px 20px; }
+.command-hud-content-island .command-hud-row { spacing: 12px; }
 
 .command-hud-icon { icon-size: 16px; color: #ddd; }
 .command-hud-icon:loading { color: #999; }
@@ -28,6 +30,11 @@
 .command-hud-text { font-size: 14px; color: #ddd; max-width: 520px; }
 .command-hud-text:live { color: #fff; }
 .command-hud-text:hint { font-size: 12px; color: #aaa; }
+
+/* The result under the status line: wraps, scrolls past max-height. */
+.command-hud-result { max-height: 320px; max-width: 760px; }
+.command-hud-result-text { font-size: 13px; color: #eee; max-width: 760px; }
+.command-hud-result-text:mono { font-family: monospace; font-size: 12px; }
 
 .command-hold-dialog-content { spacing: 12px; min-width: 420px; max-width: 720px; }
 .command-hold-dialog-title { font-size: 13px; color: #aaa; }

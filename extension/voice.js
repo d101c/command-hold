@@ -17,6 +17,12 @@ const IFACE_XML = `
     <method name="Stop"/>
     <method name="Cancel"/>
     <method name="Status"><arg type="a{sv}" name="status" direction="out"/></method>
+    <method name="Speak">
+      <arg type="s" name="text" direction="in"/>
+      <arg type="a{sv}" name="options" direction="in"/>
+      <arg type="s" name="error" direction="out"/>
+    </method>
+    <method name="StopSpeaking"/>
     <signal name="State"><arg type="s" name="state"/></signal>
     <signal name="Source"><arg type="s" name="description"/></signal>
     <signal name="Level"><arg type="d" name="level"/></signal>
@@ -111,6 +117,18 @@ export class VoiceClient {
 
     cancel() {
         return this._call('Cancel');
+    }
+
+    // Say text aloud. Resolves to '' when it started, else why not
+    // ('voice-missing' when the voice is not installed, or a D-Bus error code).
+    speak(text, lang = 'fr') {
+        const dict = {lang: GLib.Variant.new_string(lang)};
+        return this._call('Speak', new GLib.Variant('(sa{sv})', [text, dict]), STOP_TIMEOUT_MS,
+            ret => ret.deepUnpack()[0]).then(res => res.ok ? (res.value ?? '') : res.error);
+    }
+
+    stopSpeaking() {
+        return this._call('StopSpeaking');
     }
 }
 

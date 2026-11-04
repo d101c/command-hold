@@ -71,5 +71,16 @@
       <summary>Microphone</summary>
       <description>PipeWire node name of the microphone to record from. Empty = the system default input.</description>
     </key>
+    <key name="speak" type="b">
+      <default>false</default>
+      <summary>Spoken answers</summary>
+      <description>Say the result aloud with the Voice Hold engine's voice (installed by: voice-hold-engine setup --tts). A command's output is summarised by the local LLM first.</description>
+    </key>
+    <key name="voice" type="s">
+      <choices><choice value=""/><choice value="fr"/><choice value="en"/></choices>
+      <default>''</default>
+      <summary>Voice language</summary>
+      <description>fr or en. Empty: follows the session language.</description>
+    </key>
   </schema>
 </schemalist>

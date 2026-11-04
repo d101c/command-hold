@@ -183,3 +183,28 @@ def warm_up(url=DEFAULT_URL, model=DEFAULT_MODEL, opener=None):
         return True
     except (urllib.error.URLError, OSError, ValueError):
         return False
+
+
+SUMMARY_CHARS = 700
+
+
+def summarize(transcript, command, output, *, url=DEFAULT_URL, model=DEFAULT_MODEL, timeout=None, opener=None):
+    """One spoken sentence about a command's output, in the user's language,
+    through the same system prompt (so the prompt cache stays warm) and the
+    `answer` action. '' when the model has nothing usable."""
+    out = (output or '').strip()
+    if len(out) > SUMMARY_CHARS:
+        out = out[:SUMMARY_CHARS].rstrip() + '\n…'
+    text = (f'The user asked: "{transcript}"\nThe command `{command}` printed:\n{out}\n\n'
+            'Tell the user what this means in ONE short spoken sentence, in the language of the '
+            'question, with the key figure if there is one. Answer with {"action":"answer","text":"..."}.')
+    if timeout is None:
+        timeout = TIMEOUT_S if loaded(url, model, opener=opener) else COLD_TIMEOUT_S
+    try:
+        data = _post(f'{url.rstrip("/")}/api/chat', _payload(model, text, num_predict=80), timeout, opener)
+        intent = parse(data['message']['content'])
+    except (urllib.error.URLError, OSError, KeyError, TypeError, ValueError):
+        return ''
+    if not intent or intent.get('action') != 'answer':
+        return ''
+    return ' '.join(str(intent.get('text', '')).split())

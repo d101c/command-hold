@@ -30,6 +30,7 @@ export default class CommandHoldPreferences extends ExtensionPreferences {
         this._buildEngineGroup(page, window, settings);
         this._buildGestureGroup(page, settings);
         this._buildMicrophoneGroup(page, settings);
+        this._buildVoiceGroup(page, settings);
         this._buildLlmGroup(page, settings);
         this._buildAppearanceGroup(page, settings);
     }
@@ -254,6 +255,28 @@ export default class CommandHoldPreferences extends ExtensionPreferences {
         });
         refresh.connect('clicked', fill);
         fill();
+    }
+
+    // -- spoken answers --------------------------------------------------------
+
+    _buildVoiceGroup(page, settings) {
+        const group = new Adw.PreferencesGroup({
+            title: _('Spoken answers'),
+            description: _('The result is said aloud by the Voice Hold engine. Voices (French, English, ~65 MB each) are installed with: voice-hold-engine setup --tts'),
+        });
+        page.add(group);
+        const sw = new Adw.SwitchRow({title: _('Say the answers'), subtitle: _('A command\'s output is summarised by the local LLM first.')});
+        group.add(sw);
+        settings.bind('speak', sw, 'active', Gio.SettingsBindFlags.DEFAULT);
+        const voices = ['', 'fr', 'en'];
+        const voice = new Adw.ComboRow({
+            title: _('Voice'),
+            model: Gtk.StringList.new([_('Follow the session language'), _('French'), _('English')]),
+        });
+        voice.set_selected(Math.max(0, voices.indexOf(settings.get_string('voice'))));
+        voice.connect('notify::selected', () => settings.set_string('voice', voices[voice.get_selected()] ?? ''));
+        sw.bind_property('active', voice, 'sensitive', GObject.BindingFlags.SYNC_CREATE);
+        group.add(voice);
     }
 
     // -- appearance -------------------------------------------------------

@@ -68,7 +68,11 @@ class Interpreter:
             if level == safety.REFUSE:
                 intent['refused'] = True
                 intent['reason'] = why
-            intent['needs_confirmation'] = True
+            # A command that only looks something up runs by itself, silently,
+            # and its output goes to the pill. Everything else is confirmed.
+            quiet = level == safety.OK and safety.read_only(cmd)
+            intent['quiet'] = quiet
+            intent['needs_confirmation'] = not quiet
             intent['warning'] = why if level == safety.CONFIRM else ''
         elif action == 'power':
             intent['needs_confirmation'] = True

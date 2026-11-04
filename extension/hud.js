@@ -15,8 +15,15 @@ import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 // - "cursor": next to the text cursor (the pointer when there is none), like
 //   Voice Hold.
 //
-// Structure: an outer capsule (fixed size, animated, clipping) around an
-// inner content box (natural size, centred).
+// Structure: an outer capsule (fixed size, animated, paints the background
+// and the shadow) around a clipping box around the content (natural size,
+// centred). The clip is a box inside the capsule, not the capsule itself,
+// so the shadow is drawn whole: a clipped shadow shows as dark squares
+// around the rounded corners.
+//
+// A result (the output of a command, a long answer) opens a second line
+// under the status: several lines, scrollable past RESULT_MAX_H, kept until
+// the user clicks the capsule, the next command, or a long delay.
 
 const BARS = 7;
 const BAR_WEIGHTS = [0.45, 0.7, 1.0, 0.8, 1.0, 0.7, 0.45];
@@ -32,6 +39,7 @@ const ISLAND_OUT_MS = 240;
 const RESIZE_MS = 220;
 const CONTENT_FADE_MS = 160;
 const PANEL_OPAQUE_ALPHA = 200;   // below this the bar is see-through (Blur my Shell…): use black
+const MONITOR_MARGIN = 24;        // the capsule never comes closer than this to the monitor's edges
 
 export class Hud {
     // getPosition: () => 'island' | 'cursor', read each time the pill opens.
@@ -41,7 +49,14 @@ export class Hud {
         this._getPosition = getPosition;
         this._island = true;
         this._box = null;       // outer capsule
-        this._content = null;   // inner box
+        this._clip = null;      // clipping box
+        this._content = null;   // inner box: a row, then the result
+        this._row = null;
+        this._scroll = null;    // result area, hidden until there is one
+        this._result = null;
+        this._onDismiss = null;
+        this._hovering = false;
+        this._pausedHide = 0;
         this._icon = null;
         this._bars = [];
         this._heights = new Array(BARS).fill(BAR_MIN);
@@ -68,26 +83,51 @@ export class Hud {
         this._box = new St.Widget({
             style_class: `command-hud ${this._island ? 'command-hud-island' : 'command-hud-cursor'}`,
             layout_manager: new Clutter.BinLayout(),
-            clip_to_allocation: this._island,
             reactive: false,
+            track_hover: true,
             opacity: 0,
         });
         if (this._island)
             this._box.set_style(`background-color: ${this._panelColor()};`);
+        this._box.connect('button-press-event', () => {
+            if (this._onDismiss)
+                this._onDismiss();
+            return Clutter.EVENT_STOP;
+        });
+        this._box.connect('notify::hover', () => {
+            this._hovering = this._box.hover;
+            if (!this._hovering && this._pausedHide) {
+                const delay = this._pausedHide;
+                this._pausedHide = 0;
+                this.hide(delay);
+            }
+        });
+
+        this._clip = new St.Widget({
+            layout_manager: new Clutter.BinLayout(),
+            clip_to_allocation: this._island,
+            x_expand: true,
+            y_expand: true,
+        });
+        this._box.add_child(this._clip);
 
         this._content = new St.BoxLayout({
             style_class: `command-hud-content ${this._island ? 'command-hud-content-island' : ''}`,
             x_align: Clutter.ActorAlign.CENTER,
             y_align: Clutter.ActorAlign.CENTER,
         });
-        this._box.add_child(this._content);
+        setVertical(this._content);
+        this._clip.add_child(this._content);
+
+        this._row = new St.BoxLayout({style_class: 'command-hud-row', x_align: Clutter.ActorAlign.CENTER});
+        this._content.add_child(this._row);
 
         this._icon = new St.Icon({
             gicon: Gio.icon_new_for_string(this._iconPath),
             style_class: 'command-hud-icon',
             y_align: Clutter.ActorAlign.CENTER,
         });
-        this._content.add_child(this._icon);
+        this._row.add_child(this._icon);
 
         const bars = new St.BoxLayout({style_class: 'command-hud-bars', y_align: Clutter.ActorAlign.CENTER});
         this._bars = [];
@@ -98,12 +138,27 @@ export class Hud {
             bars.add_child(bar);
             this._bars.push(bar);
         }
-        this._content.add_child(bars);
+        this._row.add_child(bars);
 
         this._label = new St.Label({style_class: 'command-hud-text', y_align: Clutter.ActorAlign.CENTER});
         this._label.clutter_text.set_ellipsize(Pango.EllipsizeMode.START);
         this._label.clutter_text.set_single_line_mode(true);
-        this._content.add_child(this._label);
+        this._row.add_child(this._label);
+
+        this._scroll = new St.ScrollView({style_class: 'command-hud-result', visible: false, x_expand: true});
+        this._scroll.set_policy(St.PolicyType.NEVER, St.PolicyType.AUTOMATIC);
+        if ('overlay_scrollbars' in this._scroll)
+            this._scroll.overlay_scrollbars = true;
+        this._result = new St.Label({style_class: 'command-hud-result-text'});
+        this._result.clutter_text.set_line_wrap(true);
+        this._result.clutter_text.set_line_wrap_mode(Pango.WrapMode.WORD_CHAR);
+        this._result.clutter_text.set_ellipsize(Pango.EllipsizeMode.NONE);
+        this._result.clutter_text.set_selectable(true);
+        if (this._scroll.set_child)
+            this._scroll.set_child(this._result);
+        else
+            this._scroll.add_actor(this._result);
+        this._content.add_child(this._scroll);
 
         Main.layoutManager.uiGroup.add_child(this._box);
         // Above everything, but never grabbing anything.
@@ -115,7 +170,14 @@ export class Hud {
             this._box.destroy();
             this._box = null;
         }
+        this._clip = null;
         this._content = null;
+        this._row = null;
+        this._scroll = null;
+        this._result = null;
+        this._onDismiss = null;
+        this._hovering = false;
+        this._pausedHide = 0;
         this._icon = null;
         this._label = null;
         this._bars = [];
@@ -143,9 +205,12 @@ export class Hud {
 
     // Natural size of the capsule: that of its content.
     _natural() {
-        const [, w] = this._content.get_preferred_width(-1);
-        const [, h] = this._content.get_preferred_height(-1);
-        return [Math.ceil(w), Math.ceil(h) + (this._island ? ISLAND_OVERLAP : 0)];
+        const monitor = Main.layoutManager.primaryMonitor;
+        const maxW = monitor ? monitor.width - 2 * MONITOR_MARGIN : 10000;
+        let [, w] = this._content.get_preferred_width(-1);
+        w = Math.min(Math.ceil(w), maxW);
+        const [, h] = this._content.get_preferred_height(w);
+        return [w, Math.ceil(h) + (this._island ? ISLAND_OVERLAP : 0)];
     }
 
     // Where the capsule hangs from: centred under the primary monitor's bar.
@@ -273,6 +338,8 @@ export class Hud {
         const leaving = this._leaving;
         this._setIconState(pseudo);
         this._setText(status, 'hint');
+        this._setResult('');
+        this._box.reactive = false;
         if (fresh || leaving) {
             // New, or caught on its way out: (re)open from the bar.
             if (!this._island)
@@ -288,7 +355,44 @@ export class Hud {
             return;
         this._setIconState(pseudo);
         this._setText(text, 'hint');
+        this._setResult('');
+        this._box.reactive = false;
         this._place(true);
+    }
+
+    // A status line with a result under it: several lines, scrollable when
+    // long, monospace for a command's output. The capsule takes clicks (to
+    // dismiss, see onDismiss) and the wheel (to scroll) while it shows one.
+    result(header, text, {pseudo = 'listening', monospace = false, onDismiss = null} = {}) {
+        this._cancelHide();
+        this._build();
+        const fresh = this._box.opacity === 0;
+        const leaving = this._leaving;
+        this._setIconState(pseudo);
+        this._setText(header, 'hint');
+        this._setResult(text, monospace);
+        this._onDismiss = onDismiss;
+        this._box.reactive = true;
+        if (fresh || leaving) {
+            if (!this._island)
+                this._place();
+            this._enter();
+        } else {
+            this._place(true);
+        }
+    }
+
+    // Change the status line over a result without touching the result.
+    header(text, pseudo = '') {
+        if (!this._box)
+            return;
+        this._setIconState(pseudo);
+        this._setText(text, 'hint');
+        this._place(true);
+    }
+
+    get showingResult() {
+        return !!this._scroll?.visible;
     }
 
     live(text) {
@@ -319,6 +423,11 @@ export class Hud {
             return;
         this._hideId = GLib.timeout_add(GLib.PRIORITY_DEFAULT, delay, () => {
             this._hideId = 0;
+            if (this._hovering && this._box?.reactive) {
+                // Being read: wait until the pointer leaves.
+                this._pausedHide = Math.max(HIDE_DELAY_MS * 4, delay / 4);
+                return GLib.SOURCE_REMOVE;
+            }
             this._stopDecay();
             if (this._box)
                 this._leave(() => this._destroyBox());
@@ -369,6 +478,21 @@ export class Hud {
         this._label.set_text(text);
     }
 
+    _setResult(text, monospace = false) {
+        if (!this._scroll)
+            return;
+        if (monospace)
+            this._result.add_style_pseudo_class('mono');
+        else
+            this._result.remove_style_pseudo_class('mono');
+        this._result.set_text(text);
+        this._scroll.visible = !!text;
+        if (!text) {
+            this._onDismiss = null;
+            this._pausedHide = 0;
+        }
+    }
+
     _paintBars() {
         for (let i = 0; i < this._bars.length; i++) {
             const target = BAR_MIN + (BAR_MAX - BAR_MIN) * this._level * BAR_WEIGHTS[i] *
@@ -410,5 +534,14 @@ export class Hud {
             GLib.source_remove(this._hideId);
             this._hideId = 0;
         }
+        this._pausedHide = 0;
     }
+}
+
+// St.BoxLayout: `orientation` from GNOME 48, `vertical` (deprecated) before.
+function setVertical(box) {
+    if ('orientation' in box)
+        box.orientation = Clutter.Orientation.VERTICAL;
+    else
+        box.vertical = true;
 }

@@ -21,6 +21,8 @@ const END_GUARD_MS = 3000;
 const SHOW_RESULT_MS = 2500;
 const SHOW_ANSWER_MS = 6000;
 const SHOW_JOB_MS = 4000;
+const SHOW_OUTPUT_MS = 45000;     // a command's output stays until clicked, or this long
+const SHOW_RECALL_MS = 30000;     // a history entry recalled from the menu
 
 export function modifierMask(accel) {
     let mask = 0;
@@ -62,7 +64,7 @@ export class Commander {
         this._mask = modifierMask(settings.get_strv('command-shortcut')[0] ?? '');
         this._session = null;   // {ending, texts: [], window}
         this._busy = false;     // interpreting / confirming / executing
-        this._jobs = new Map(); // id -> command
+        this._jobs = new Map(); // job id -> {command, id: history id}
 
         settings.connectObject(
             'changed::mode', () => this._reconfigure(),
@@ -149,6 +151,7 @@ export class Commander {
             return;
         const session = {ending: false, texts: [], window: global.display.focus_window};
         this._session = session;
+        this._voice.stopSpeaking();
         if (this._settings.get_boolean('show-hud'))
             this._hud.show(this._('Starting…'), 'loading');
         if (this._settings.get_boolean('llm'))
@@ -386,23 +389,35 @@ export class Commander {
 
     async _execute(intent, text, window) {
         const result = await dispatch(intent, this._actions);
+        const id = intent.id ?? '';
         switch (result.kind) {
-        case 'done':
-            this._hud.status(result.say || this._('Done'), 'listening');
+        case 'done': {
+            const say = result.say || this._('Done');
+            this._hud.status(say, 'listening');
             this._hud.hide(SHOW_RESULT_MS);
+            this._engine.note(id, say);
+            this._speak(say);
             return;
+        }
         case 'answer':
-            this._hud.status(result.text, 'listening');
-            this._hud.hide(SHOW_ANSWER_MS);
+            this._showText(text, result.text, SHOW_ANSWER_MS);
+            this._engine.note(id, result.text);
+            this._speak(result.text);
             return;
         case 'refused':
             this._hud.error(this._('Refused: %s').format(result.reason));
+            this._engine.note(id, this._('Refused: %s').format(result.reason));
             return;
         case 'error':
             this._hud.error(result.reason);
+            this._engine.note(id, result.reason);
             return;
         case 'unknown':
             this._hud.error(this._unknownText(result.reason, text));
+            this._engine.note(id, this._unknownText(result.reason, text));
+            return;
+        case 'quiet':
+            await this._runQuiet(result.intent, text);
             return;
         case 'confirm':
             break;
@@ -437,7 +452,86 @@ export class Commander {
             this._showEngineError(run.error);
             return;
         }
-        this._jobs.set(run.value, i.command);
+        this._jobs.set(run.value, {command: i.command, id});
+    }
+
+    // A read-only command: the engine runs it, the pill shows the output
+    // under the command, several lines, scrollable, until clicked away.
+    async _runQuiet(intent, text) {
+        this._hud.status(`$ ${intent.command}`, 'loading');
+        const run = await this._engine.runQuiet(intent.id ?? '', intent.command, intent.cwd ?? '');
+        if (!run.ok) {
+            this._showEngineError(run.error);
+            return;
+        }
+        const {code, output} = run.value;
+        const header = code === 0 ? `$ ${intent.command}` : this._('$ %s — exit %d').format(intent.command, code);
+        this._showOutput(header, output || this._('(no output)'), code === 0 ? 'listening' : 'error');
+        if (!this._settings.get_boolean('speak') || !output || !this._settings.get_boolean('llm'))
+            return;
+        // Raw output is not for the ear: the LLM turns it into one sentence,
+        // which replaces the status line and is said aloud.
+        const sum = await this._engine.summarize(text, intent.command, output);
+        if (!sum.ok || !sum.value || !this._hud.showingResult)
+            return;
+        this._hud.header(sum.value, code === 0 ? 'listening' : 'error');
+        this._speak(sum.value);
+    }
+
+    // -- spoken answers ------------------------------------------------------------
+
+    _speakLang() {
+        const v = this._settings.get_string('voice');
+        if (v)
+            return v;
+        const lang = (GLib.get_language_names()[0] ?? '').toLowerCase();
+        return lang.startsWith('fr') ? 'fr' : 'en';
+    }
+
+    _speak(text) {
+        if (!this._settings.get_boolean('speak') || !text)
+            return;
+        this._voice.speak(text, this._speakLang()).then(err => {
+            if (err === 'voice-missing')
+                this._hud.error(this._('No voice installed — run: voice-hold-engine setup --tts'));
+            else if (err && err !== 'cancelled')
+                log(`command-hold: speak: ${err}`);
+        });
+    }
+
+    // One short answer stays on the status line; a long or multi-line one
+    // opens the result area.
+    _showText(heard, answer, delay) {
+        const long = answer.includes('\n') || answer.length > 72;
+        if (!long) {
+            this._hud.status(answer, 'listening');
+            this._hud.hide(delay);
+            return;
+        }
+        this._hud.result(this._('“%s”').format(heard), answer, {onDismiss: () => this._hud.hideNow()});
+        this._hud.hide(SHOW_OUTPUT_MS);
+    }
+
+    _showOutput(header, output, pseudo) {
+        this._hud.result(header, output, {pseudo, monospace: true, onDismiss: () => this._hud.hideNow()});
+        this._hud.hide(SHOW_OUTPUT_MS);
+    }
+
+    // From the indicator's menu: show a past request again, with what it
+    // produced.
+    recall(entry) {
+        if (this._busy || this._session)
+            return;
+        const heard = this._('“%s”').format(entry.transcript ?? '');
+        if (entry.command) {
+            const header = entry.exit === 0 || entry.exit === null
+                ? `${heard}  $ ${entry.command}` : this._('%s  $ %s — exit %d').format(heard, entry.command, entry.exit);
+            this._hud.result(header, entry.result || entry.say || this._('(no output)'),
+                {pseudo: entry.exit ? 'error' : 'listening', monospace: !!entry.result, onDismiss: () => this._hud.hideNow()});
+        } else {
+            this._hud.result(heard, entry.result || entry.say || this._('(nothing)'), {onDismiss: () => this._hud.hideNow()});
+        }
+        this._hud.hide(SHOW_RECALL_MS);
     }
 
     _unknownText(reason, text) {
@@ -468,13 +562,15 @@ export class Commander {
             this._hud.show(this._('Running…'), 'loading');
             return;
         }
+        const job = this._jobs.get(id);
         this._jobs.delete(id);
         const detail = tail ? ` — ${tail}` : '';
-        if (state === 'done')
-            this._hud.show(this._('Done ✓%s').format(detail), 'listening');
-        else
-            this._hud.show(this._('Failed ✗ (exit %d)%s').format(code, detail), 'error');
+        const text = state === 'done'
+            ? this._('Done ✓%s').format(detail)
+            : this._('Failed ✗ (exit %d)%s').format(code, detail);
+        this._hud.show(text, state === 'done' ? 'listening' : 'error');
         this._hud.hide(SHOW_JOB_MS);
+        this._engine.note(job?.id ?? '', text, code);
     }
 
     _showEngineError(code) {

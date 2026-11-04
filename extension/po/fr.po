@@ -528,3 +528,54 @@ msgstr "Ollama n'a pas démarré"
 
 msgid "Everything runs on this computer: Voice Hold listens, command-hold-engine understands and runs confirmed commands, Ollama (optional) handles open requests. The Installation page installs all three for you; the commands below do the same by hand."
 msgstr "Tout tourne sur cet ordinateur : Voice Hold écoute, command-hold-engine comprend et lance les commandes confirmées, Ollama (optionnel) traite les demandes ouvertes. La page Installation installe les trois pour vous ; les commandes ci-dessous font la même chose à la main."
+
+msgid "$ %s — exit %d"
+msgstr "$ %s — code %d"
+
+msgid "(no output)"
+msgstr "(pas de sortie)"
+
+msgid "“%s”"
+msgstr "« %s »"
+
+msgid "%s  $ %s — exit %d"
+msgstr "%s  $ %s — code %d"
+
+msgid "(nothing)"
+msgstr "(rien)"
+
+msgid "Recent requests"
+msgstr "Dernières demandes"
+
+msgid "Nothing yet"
+msgstr "Rien pour l’instant"
+
+msgid " (exit %d)"
+msgstr " (code %d)"
+
+msgid "No voice installed — run: voice-hold-engine setup --tts"
+msgstr "Aucune voix installée — lancez : voice-hold-engine setup --tts"
+
+msgid "Spoken answers"
+msgstr "Réponses parlées"
+
+msgid "The result is said aloud by the Voice Hold engine. Voices (French, English, ~65 MB each) are installed with: voice-hold-engine setup --tts"
+msgstr "Le résultat est lu à voix haute par le moteur Voice Hold. Les voix (français, anglais, ~65 Mo chacune) s’installent avec : voice-hold-engine setup --tts"
+
+msgid "Say the answers"
+msgstr "Lire les réponses"
+
+msgid "A command's output is summarised by the local LLM first."
+msgstr "La sortie d’une commande est d’abord résumée par le LLM local."
+
+msgid "Voice"
+msgstr "Voix"
+
+msgid "Follow the session language"
+msgstr "Suivre la langue de la session"
+
+msgid "French"
+msgstr "Français"
+
+msgid "English"
+msgstr "Anglais"

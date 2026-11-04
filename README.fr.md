@@ -35,8 +35,13 @@ Troisième membre de la famille Hold, après [Accent Hold](https://github.com/d1
    seul : liste noire qui refuse net (`rm -rf /`, `mkfs`, `dd` vers un disque,
    fork bomb, réseau redirigé dans un shell, comptes…), liste grise qui ajoute un
    avertissement (`sudo`, `rm`, gestionnaires de paquets, `git push --force`,
-   `kill`…). Chaque commande est affichée avant de tourner ; le LLM ne voit
-   jamais la sortie des commandes.
+   `kill`…), et une liste blanche fermée de commandes *en lecture seule*
+   (`df`, `free`, `ls`, `git status`, `systemctl status`, `nmcli device
+   status`… sans redirection, enchaînement ni sous-shell) qui tournent tout de
+   suite, en silence, leur sortie affichée dans la pastille. Toute autre
+   commande est affichée et confirmée avant de tourner dans un terminal. Le
+   LLM ne voit la sortie d'une commande que si les réponses parlées sont
+   activées, pour en formuler une phrase.
 
 Mesuré sur un i7-8565U (4 cœurs, pas de GPU) : une action GNOME tombe ≈ 0,6 s
 après la fin de la phrase ; une commande shell est proposée ≈ 3 s après ;
@@ -73,18 +78,28 @@ terminal (Ptyxis, Console ou GNOME Terminal).
 
 Raccourci (modificateur obligatoire), mode de geste, seuil d'appui, délai de
 silence, micro (les entrées du moteur Voice Hold, défaut système par défaut),
-LLM on/off, modèle, URL d'Ollama, dossier de travail des commandes, pastille
-(îlot qui sort de sous la barre supérieure, ou à côté du curseur) et
-indicateur. Le menu de la barre bascule le raccourci et le LLM et
-montre l'état du moteur sans le démarrer.
+LLM on/off, modèle, URL d'Ollama, dossier de travail des commandes, réponses
+parlées (désactivées par défaut ; voix installées par `voice-hold-engine
+setup --tts`, français et anglais, ~65 Mo chacune ; la sortie d'une commande
+est d'abord résumée en une phrase par le LLM, ≈ 5 s), pastille (îlot qui
+gonfle hors de la barre supérieure, ou à côté du curseur) et indicateur.
+
+La pastille affiche la sortie d'une commande sur plusieurs lignes, avec
+défilement quand c'est long ; un clic la ferme. Le menu de la barre bascule
+le raccourci et le LLM, liste les cinq dernières demandes (un clic en
+remontre une avec ce qu'elle a produit) et montre l'état du moteur sans le
+démarrer.
 
 ## Sécurité
 
 Le helper écoute sur le bus de session sans authentification, comme tout
 service de session : n'importe quel processus tournant sous votre compte peut
 l'appeler. Il ne lance que ce que l'extension a affiché et que vous avez
-confirmé ; les commandes refusées le sont quel que soit l'appelant. Les
-commandes lancées sont journalisées dans `~/.local/state/command-hold/history.log`.
+confirmé ; les commandes refusées le sont quel que soit l'appelant ; les
+commandes en lecture seule sont revérifiées par le helper avant de tourner en
+silence. Les demandes et ce qu'elles ont donné sont gardées dans
+`~/.local/state/command-hold/history.jsonl` (200 dernières), les commandes
+confirmées aussi dans `history.log`.
 Luminosité : écran interne seulement. Super seul ne peut pas servir de
 raccourci (c'est la touche d'aperçu de Mutter).
 

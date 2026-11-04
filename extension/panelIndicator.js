@@ -6,16 +6,22 @@ import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 import * as PanelMenu from 'resource:///org/gnome/shell/ui/panelMenu.js';
 import * as PopupMenu from 'resource:///org/gnome/shell/ui/popupMenu.js';
 
-import {engineStatus} from './engine.js';
+import {engineHistory, engineStatus} from './engine.js';
 
-// Top-bar indicator: icon, enable switch, LLM switch, engine state, preferences.
+const RECENT = 5;
+const RECENT_CHARS = 48;
+
+// Top-bar indicator: icon, enable switch, LLM switch, the last requests,
+// engine state, preferences.
 export const CommandHoldIndicator = GObject.registerClass(
 class CommandHoldIndicator extends PanelMenu.Button {
-    _init(settings, iconPath, openPreferences, gettext) {
+    // onRecall(entry): show a past request and its result in the pill.
+    _init(settings, iconPath, openPreferences, gettext, onRecall = null) {
         const _ = gettext || (s => s);
         super._init(0.0, _('Command Hold'));
         this._settings = settings;
         this._openPreferences = openPreferences;
+        this._onRecall = onRecall;
 
         this.add_child(new St.Icon({gicon: Gio.icon_new_for_string(iconPath), style_class: 'system-status-icon'}));
 
@@ -34,11 +40,17 @@ class CommandHoldIndicator extends PanelMenu.Button {
         this.menu.addMenuItem(this._llm);
 
         this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
+        this._recent = new PopupMenu.PopupSubMenuMenuItem(_('Recent requests'));
+        this.menu.addMenuItem(this._recent);
+
+        this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
         this._status = new PopupMenu.PopupMenuItem(_('Engine: checking…'), {reactive: false});
         this.menu.addMenuItem(this._status);
         this.menu.connectObject('open-state-changed', (_m, open) => {
-            if (open)
+            if (open) {
                 this._refresh(_);
+                this._refreshRecent(_);
+            }
         }, this);
 
         this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
@@ -67,11 +79,32 @@ class CommandHoldIndicator extends PanelMenu.Button {
         });
     }
 
+    // The last requests, newest first: "what was heard → what came of it".
+    // Activating one shows it again in the pill.
+    _refreshRecent(_) {
+        engineHistory(RECENT).then(entries => {
+            if (!this._recent)
+                return;
+            this._recent.menu.removeAll();
+            if (!entries.length) {
+                this._recent.menu.addMenuItem(new PopupMenu.PopupMenuItem(_('Nothing yet'), {reactive: false}));
+                return;
+            }
+            for (const e of entries) {
+                const item = new PopupMenu.PopupMenuItem(recentLabel(e, _));
+                item.connectObject('activate', () => this._onRecall?.(e), this);
+                this._recent.menu.addMenuItem(item);
+            }
+        });
+    }
+
     destroy() {
         this.menu.disconnectObject(this);
         this._settings.disconnectObject(this);
         this._settings = null;
         this._status = null;
+        this._recent = null;
+        this._onRecall = null;
         this._toggle = null;
         this._llm = null;
         this._openPreferences = null;
@@ -79,8 +112,23 @@ class CommandHoldIndicator extends PanelMenu.Button {
     }
 });
 
-export function addIndicator(uuid, settings, iconPath, openPreferences, gettext) {
-    const indicator = new CommandHoldIndicator(settings, iconPath, openPreferences, gettext);
+function shorten(text, max) {
+    const chars = Array.from(String(text ?? '').replace(/\s+/g, ' ').trim());
+    return chars.length > max ? chars.slice(0, max - 1).join('') + '…' : chars.join('');
+}
+
+export function recentLabel(e, _) {
+    const heard = shorten(e.transcript, RECENT_CHARS);
+    let outcome;
+    if (e.command)
+        outcome = `$ ${shorten(e.command, RECENT_CHARS)}` + (e.exit ? _(' (exit %d)').format(e.exit) : '');
+    else
+        outcome = shorten(e.result || e.say || e.action, RECENT_CHARS);
+    return `${e.ts?.slice(11, 16) ?? ''}  ${heard}  →  ${outcome}`;
+}
+
+export function addIndicator(uuid, settings, iconPath, openPreferences, gettext, onRecall = null) {
+    const indicator = new CommandHoldIndicator(settings, iconPath, openPreferences, gettext, onRecall);
     Main.panel.addToStatusArea(uuid, indicator);
     return indicator;
 }

@@ -23,6 +23,27 @@ const IFACE_XML = `
       <arg type="s" name="cwd" direction="in"/>
       <arg type="s" name="job_id" direction="out"/>
     </method>
+    <method name="RunQuiet">
+      <arg type="s" name="id" direction="in"/>
+      <arg type="s" name="command" direction="in"/>
+      <arg type="s" name="cwd" direction="in"/>
+      <arg type="(is)" name="result" direction="out"/>
+    </method>
+    <method name="Note">
+      <arg type="s" name="id" direction="in"/>
+      <arg type="s" name="result" direction="in"/>
+      <arg type="i" name="exit_code" direction="in"/>
+    </method>
+    <method name="Summarize">
+      <arg type="s" name="transcript" direction="in"/>
+      <arg type="s" name="command" direction="in"/>
+      <arg type="s" name="output" direction="in"/>
+      <arg type="s" name="sentence" direction="out"/>
+    </method>
+    <method name="History">
+      <arg type="i" name="n" direction="in"/>
+      <arg type="s" name="entries" direction="out"/>
+    </method>
     <method name="Status"><arg type="a{sv}" name="status" direction="out"/></method>
     <method name="Prepare"/>
     <method name="ReloadApps"/>
@@ -38,6 +59,7 @@ const Proxy = Gio.DBusProxy.makeProxyWrapper(IFACE_XML);
 // "Thinking…" meanwhile.
 const INTERPRET_TIMEOUT_MS = 100000;
 const CALL_TIMEOUT_MS = 10000;
+const QUIET_TIMEOUT_MS = 20000;   // the engine kills the command after 12 s
 
 export class EngineClient {
     // handlers: {Owner, Job}
@@ -126,6 +148,53 @@ export class EngineClient {
         return this._call('Run', new GLib.Variant('(ss)', [command, cwd]), CALL_TIMEOUT_MS,
             ret => ret.deepUnpack()[0]);
     }
+
+    // A read-only command, run by the engine itself: resolves to
+    // {ok, value: {code, output}}.
+    runQuiet(id, command, cwd) {
+        return this._call('RunQuiet', new GLib.Variant('(sss)', [id, command, cwd]), QUIET_TIMEOUT_MS,
+            ret => {
+                const [[code, output]] = ret.deepUnpack();
+                return {code, output};
+            });
+    }
+
+    // One spoken sentence about a command's output, from the local LLM:
+    // resolves to {ok, value: sentence} ('' when the LLM had nothing).
+    summarize(transcript, command, output) {
+        return this._call('Summarize', new GLib.Variant('(sss)', [transcript, command, output]), INTERPRET_TIMEOUT_MS,
+            ret => ret.deepUnpack()[0]);
+    }
+
+    // Attach what the pill showed to a history entry. Fire and forget.
+    note(id, result, exitCode = -1) {
+        if (!id)
+            return Promise.resolve({ok: false, error: 'no-id'});
+        return this._call('Note', new GLib.Variant('(ssi)', [id, String(result ?? ''), exitCode]), CALL_TIMEOUT_MS);
+    }
+}
+
+// The last n requests (newest first) as an array of
+// {id, ts, transcript, action, command, say, result, exit}; [] when the
+// engine is not running (it is not started for this) or on any error.
+export function engineHistory(n, cancellable = null) {
+    return new Promise(resolve => {
+        try {
+            Gio.DBus.session.call(BUS_NAME, OBJECT_PATH, INTERFACE, 'History', new GLib.Variant('(i)', [n]),
+                new GLib.VariantType('(s)'), Gio.DBusCallFlags.NO_AUTO_START, CALL_TIMEOUT_MS, cancellable,
+                (conn, res) => {
+                    try {
+                        const [json] = conn.call_finish(res).deepUnpack();
+                        const entries = JSON.parse(json);
+                        resolve(Array.isArray(entries) ? entries : []);
+                    } catch {
+                        resolve([]);
+                    }
+                });
+        } catch {
+            resolve([]);
+        }
+    });
 }
 
 // Status of the helper without starting it (prefs, indicator): resolves to

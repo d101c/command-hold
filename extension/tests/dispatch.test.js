@@ -27,6 +27,16 @@ test('closed actions call the right method with clamped args', async () => {
     if (JSON.stringify(a.calls) !== JSON.stringify(expect)) throw new Error(JSON.stringify(a.calls));
 });
 
+test('a quiet read-only command is run silently, not confirmed', async () => {
+    const a = new Fake();
+    let r = await dispatch({action: 'run_shell', command: 'df -h ~', quiet: true, needs_confirmation: false}, a);
+    if (r.kind !== 'quiet' || r.intent.command !== 'df -h ~') throw new Error(JSON.stringify(r));
+    r = await dispatch({action: 'run_shell', command: 'df -h ~', quiet: true, refused: true, reason: 'x'}, a);
+    if (r.kind !== 'refused') throw new Error(JSON.stringify(r));
+    r = await dispatch({action: 'run_shell', command: 'rm x', quiet: false}, a);
+    if (r.kind !== 'confirm') throw new Error(JSON.stringify(r));
+});
+
 test('run_shell asks for confirmation, refused stays refused', async () => {
     const a = new Fake();
     let r = await dispatch({action: 'run_shell', command: 'df -h'}, a);

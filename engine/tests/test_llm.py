@@ -145,3 +145,28 @@ def test_interpreter_reports_llm_timeout(fake_apps):
     it = Interpreter(apps=fake_apps, use_llm=True, llm_fn=slow)
     out = it.interpret('optimise mon ordinateur')
     assert out['action'] == 'unknown' and out['reason'] == 'llm-timeout'
+
+
+def test_summarize_goes_through_the_answer_action():
+    seen = {}
+
+    def opener(req, timeout):
+        import io, json as _json
+        seen['payload'] = _json.loads(req.data)
+        return io.BytesIO(_json.dumps({'message': {'content': '{"action":"answer","text":"Il reste  28 Go libres."}'}}).encode())
+    out = llm.summarize('place disque', 'df -h ~', 'Filesystem Size Used Avail\n/dev/sda5 358G 312G 28G', timeout=1, opener=opener)
+    assert out == 'Il reste 28 Go libres.'
+    msgs = seen['payload']['messages']
+    assert msgs[0]['content'] == llm.SYSTEM and 'df -h ~' in msgs[1]['content'] and '28G' in msgs[1]['content']
+    assert seen['payload']['options']['num_predict'] == 80
+
+
+def test_summarize_returns_empty_on_anything_else():
+    import io, json as _json
+    def unknown(req, timeout):
+        return io.BytesIO(_json.dumps({'message': {'content': '{"action":"unknown"}'}}).encode())
+    assert llm.summarize('x', 'ls', 'a', timeout=1, opener=unknown) == ''
+
+    def boom(req, timeout):
+        raise OSError('down')
+    assert llm.summarize('x', 'ls', 'a' * 5000, timeout=1, opener=boom) == ''

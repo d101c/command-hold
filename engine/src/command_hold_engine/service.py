@@ -11,7 +11,8 @@ from concurrent.futures import ThreadPoolExecutor
 from dbus_fast import DBusError, Variant
 from dbus_fast.service import ServiceInterface, method, signal
 
-from . import INTERFACE, __version__, jobs as jobsmod, llm
+from . import INTERFACE, __version__, jobs as jobsmod, llm, quick, safety
+from .history import History
 from .interpreter import Interpreter
 
 IDLE_S = float(os.environ.get('COMMAND_HOLD_IDLE_S', '600'))
@@ -43,9 +44,10 @@ def to_variants(intent):
 
 
 class CommandHoldInterface(ServiceInterface):
-    def __init__(self, loop, *, interpreter=None, runner=None, warm_up=True):
+    def __init__(self, loop, *, interpreter=None, runner=None, warm_up=True, history=None):
         super().__init__(INTERFACE)
         self._loop = loop
+        self._history = history or History()
         self._executor = ThreadPoolExecutor(max_workers=1, thread_name_prefix='llm')
         self._interpreter = interpreter or Interpreter()
         self._runner = runner or jobsmod.JobRunner(self._on_job, loop=loop)
@@ -108,12 +110,49 @@ class CommandHoldInterface(ServiceInterface):
         self._interpreter.llm_url = str(_opt(options, 'llm-url', llm.DEFAULT_URL)) or llm.DEFAULT_URL
         self._interpreter.work_dir = str(_opt(options, 'work-dir', ''))
         intent = await self._loop.run_in_executor(self._executor, self._interpreter.interpret, text)
+        intent['id'] = self._history.add(text, intent.get('action', 'unknown'),
+                                         command=str(intent.get('command', '')),
+                                         say=str(intent.get('text', '')), source=str(intent.get('source', '')))
         return to_variants(intent)
+
+    @method()
+    async def RunQuiet(self, id: 's', command: 's', cwd: 's') -> '(is)':
+        """Run a read-only command here and return (exit code, output). The
+        command is checked again: only the closed list runs this way."""
+        self._touch()
+        if not safety.read_only(command):
+            raise DBusError(REFUSED_ERROR, 'not a read-only command')
+        code, out = await self._loop.run_in_executor(None, quick.run, command, cwd)
+        self._history.note(id, out, code)
+        return [code, out]
+
+    @method()
+    async def Summarize(self, transcript: 's', command: 's', output: 's') -> 's':
+        """One spoken sentence about a command's output (for the voice), from
+        the local LLM. '' when the LLM is off or has nothing."""
+        self._touch()
+        if not self._interpreter.use_llm:
+            return ''
+        it = self._interpreter
+        return await self._loop.run_in_executor(
+            self._executor, lambda: llm.summarize(transcript, command, output, url=it.llm_url, model=it.llm_model))
+
+    @method()
+    def Note(self, id: 's', result: 's', exit_code: 'i'):
+        """Attach the outcome the pill showed to a history entry (-1: no exit code)."""
+        self._touch()
+        self._history.note(id, result, None if exit_code < 0 else exit_code)
+
+    @method()
+    def History(self, n: 'i') -> 's':
+        """The last n requests, newest first, as a JSON array."""
+        self._touch()
+        import json
+        return json.dumps(self._history.last(n), ensure_ascii=False)
 
     @method()
     def Run(self, command: 's', cwd: 's') -> 's':
         self._touch()
-        from . import safety
         level, why = safety.classify(command)
         if level == safety.REFUSE:
             raise DBusError(REFUSED_ERROR, why)

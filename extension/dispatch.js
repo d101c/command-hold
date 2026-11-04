@@ -8,6 +8,7 @@
 // Each returns a short string for the pill (or a Promise of one).
 //
 // dispatch() returns {kind: 'done', say} | {kind: 'confirm', intent} |
+// {kind: 'quiet', intent} (a read-only command: run silently, show the output) |
 // {kind: 'refused', reason} | {kind: 'unknown', reason} | {kind: 'answer', text}.
 
 const CLOSED = {
@@ -52,7 +53,7 @@ export async function dispatch(intent, actions) {
             return {kind: 'refused', reason: intent.reason ?? ''};
         if (!intent.command)
             return {kind: 'unknown', reason: 'empty command'};
-        return {kind: 'confirm', intent};
+        return {kind: intent.quiet === true ? 'quiet' : 'confirm', intent};
     }
     if (action === 'power')
         return {kind: 'confirm', intent};

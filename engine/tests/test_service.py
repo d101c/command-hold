@@ -79,3 +79,40 @@ async def test_status_shape(fake_apps, monkeypatch):
     iface = service.CommandHoldInterface(loop, warm_up=False, interpreter=Interpreter(apps=fake_apps, use_llm=False), runner=FakeRunner())
     st = unwrap(iface.Status)(iface)
     assert st['ollama'].value is True and st['model'].value is False and st['apps'].value == len(fake_apps)
+
+
+async def test_interpret_marks_read_only_commands_quiet_and_records_history(fake_apps, tmp_path):
+    from command_hold_engine.history import History
+    loop = asyncio.get_running_loop()
+    answers = {'place disque': {'action': 'run_shell', 'command': 'df -h ~'},
+               'installe vlc': {'action': 'run_shell', 'command': 'sudo apt install -y vlc'}}
+    it = Interpreter(apps=fake_apps, llm_fn=lambda text, url, model: answers[text])
+    h = History(tmp_path / 'h.jsonl')
+    iface = service.CommandHoldInterface(loop, warm_up=False, interpreter=it, runner=FakeRunner(), history=h)
+    out = await unwrap(iface.Interpret)(iface, 'place disque', {})
+    assert out['quiet'].value is True and out['needs_confirmation'].value is False
+    out2 = await unwrap(iface.Interpret)(iface, 'installe vlc', {})
+    assert out2['quiet'].value is False and out2['needs_confirmation'].value is True
+    ids = [e['id'] for e in h.last(5)]
+    assert ids == [out2['id'].value, out['id'].value]
+    assert h.last(5)[1]['command'] == 'df -h ~'
+
+
+async def test_run_quiet_only_runs_the_closed_list(fake_apps, tmp_path):
+    from command_hold_engine.history import History
+    import json
+    loop = asyncio.get_running_loop()
+    h = History(tmp_path / 'h.jsonl')
+    iface = service.CommandHoldInterface(loop, warm_up=False, interpreter=Interpreter(apps=fake_apps, use_llm=False),
+                                         runner=FakeRunner(), history=h)
+    eid = h.add('dis bonjour', 'run_shell', command='echo bonjour')
+    code, out = await unwrap(iface.RunQuiet)(iface, eid, 'echo bonjour', str(tmp_path))
+    assert (code, out) == (0, 'bonjour')
+    with pytest.raises(DBusError):
+        await unwrap(iface.RunQuiet)(iface, eid, 'echo bonjour > f', str(tmp_path))
+    with pytest.raises(DBusError):
+        await unwrap(iface.RunQuiet)(iface, eid, 'rm -rf build', str(tmp_path))
+    unwrap(iface.Note)(iface, eid, 'shown text', -1)
+    entries = json.loads(unwrap(iface.History)(iface, 5))
+    assert entries[0]['result'] == 'shown text' and entries[0]['exit'] == 0
+    assert json.loads(unwrap(iface.History)(iface, 0)) == []
