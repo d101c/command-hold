@@ -64,7 +64,7 @@
       <choices><choice value="island"/><choice value="cursor"/></choices>
       <default>'island'</default>
       <summary>Pill position</summary>
-      <description>island: a capsule that slides out from under the top bar, centred. cursor: next to the text cursor or the pointer.</description>
+      <description>island: a capsule that swells out of the top bar, centred, like a phone's Dynamic Island. cursor: next to the text cursor or the pointer.</description>
     </key>
     <key name="microphone" type="s">
       <default>''</default>

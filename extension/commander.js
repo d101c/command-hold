@@ -106,6 +106,13 @@ export class Commander {
 
     // -- entry point -----------------------------------------------------------
 
+    // Load the model at login so the first open request of the day does not
+    // wait for it. Only when the LLM is on; the engine idles out by itself.
+    warmUp() {
+        if (this._settings.get_boolean('llm'))
+            this._engine.prepare();
+    }
+
     shortcut() {
         if (this._busy)
             return;
@@ -144,6 +151,8 @@ export class Commander {
         this._session = session;
         if (this._settings.get_boolean('show-hud'))
             this._hud.show(this._('Starting…'), 'loading');
+        if (this._settings.get_boolean('llm'))
+            this._engine.prepare();
         this._voice.start({'silence-stop-s': 0, 'source': this._settings.get_string('microphone')}).then(err => {
             if (!err || this._session !== session || session.ending)
                 return;
@@ -436,6 +445,8 @@ export class Commander {
             return this._('Not a GNOME action, and the local LLM is off — “%s”').format(text);
         if (reason === 'llm-unavailable')
             return this._('Not a GNOME action, and Ollama is not answering — “%s”').format(text);
+        if (reason === 'llm-timeout')
+            return this._('Not a GNOME action, and Ollama took too long — “%s”').format(text);
         if (reason === 'nothing to do')
             return this._('OK');
         return this._('Not understood: “%s”').format(text);

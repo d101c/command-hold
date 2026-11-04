@@ -5,11 +5,18 @@ import Pango from 'gi://Pango';
 import St from 'gi://St';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 
-// The dark pill: microphone icon, level bars, and a line of text (status,
-// then the words as they come). It never takes focus. Two placements: an
-// "island" that slides out from under the top bar, centred on the primary
-// monitor and growing symmetrically as the text grows, or next to the text
-// cursor (the pointer when there is none), like Voice Hold.
+// The pill: microphone icon, level bars, and a line of text (status, then the
+// words as they come). It never takes focus. Two placements:
+//
+// - "island": a capsule that is part of the top bar, like the Dynamic Island
+//   of a phone. It shares the bar's background, hangs from its bottom edge
+//   with rounded lower corners only, swells out of the bar when it opens,
+//   grows from both ends as the text grows, and shrinks back into it.
+// - "cursor": next to the text cursor (the pointer when there is none), like
+//   Voice Hold.
+//
+// Structure: an outer capsule (fixed size, animated, clipping) around an
+// inner content box (natural size, centred).
 
 const BARS = 7;
 const BAR_WEIGHTS = [0.45, 0.7, 1.0, 0.8, 1.0, 0.7, 0.45];
@@ -17,10 +24,14 @@ const BAR_MIN = 3;
 const BAR_MAX = 20;
 const HIDE_DELAY_MS = 450;
 const MAX_CHARS = 64;
-const ISLAND_GAP = 6;        // px between the top bar and the island
-const ISLAND_IN_MS = 260;
-const ISLAND_OUT_MS = 180;
-const RESIZE_MS = 160;
+
+const ISLAND_OVERLAP = 1;    // px the capsule slips under the bar, so no seam shows
+const ISLAND_SEED_W = 64;    // width of the bump the capsule swells from
+const ISLAND_IN_MS = 380;
+const ISLAND_OUT_MS = 240;
+const RESIZE_MS = 220;
+const CONTENT_FADE_MS = 160;
+const PANEL_OPAQUE_ALPHA = 200;   // below this the bar is see-through (Blur my Shell…): use black
 
 export class Hud {
     // getPosition: () => 'island' | 'cursor', read each time the pill opens.
@@ -29,7 +40,8 @@ export class Hud {
         this._iconPath = iconPath;
         this._getPosition = getPosition;
         this._island = true;
-        this._box = null;
+        this._box = null;       // outer capsule
+        this._content = null;   // inner box
         this._icon = null;
         this._bars = [];
         this._heights = new Array(BARS).fill(BAR_MIN);
@@ -37,6 +49,7 @@ export class Hud {
         this._hideId = 0;
         this._decayId = 0;
         this._level = 0;
+        this._leaving = false;
     }
 
     destroy() {
@@ -51,15 +64,30 @@ export class Hud {
         if (this._box)
             return;
         this._island = this._getPosition() !== 'cursor';
-        this._box = new St.BoxLayout({style_class: 'command-hud', reactive: false, y_align: Clutter.ActorAlign.CENTER});
+
+        this._box = new St.Widget({
+            style_class: `command-hud ${this._island ? 'command-hud-island' : 'command-hud-cursor'}`,
+            layout_manager: new Clutter.BinLayout(),
+            clip_to_allocation: this._island,
+            reactive: false,
+            opacity: 0,
+        });
         if (this._island)
-            this._box.add_style_class_name('command-hud-island');
+            this._box.set_style(`background-color: ${this._panelColor()};`);
+
+        this._content = new St.BoxLayout({
+            style_class: `command-hud-content ${this._island ? 'command-hud-content-island' : ''}`,
+            x_align: Clutter.ActorAlign.CENTER,
+            y_align: Clutter.ActorAlign.CENTER,
+        });
+        this._box.add_child(this._content);
+
         this._icon = new St.Icon({
             gicon: Gio.icon_new_for_string(this._iconPath),
             style_class: 'command-hud-icon',
             y_align: Clutter.ActorAlign.CENTER,
         });
-        this._box.add_child(this._icon);
+        this._content.add_child(this._icon);
 
         const bars = new St.BoxLayout({style_class: 'command-hud-bars', y_align: Clutter.ActorAlign.CENTER});
         this._bars = [];
@@ -70,14 +98,13 @@ export class Hud {
             bars.add_child(bar);
             this._bars.push(bar);
         }
-        this._box.add_child(bars);
+        this._content.add_child(bars);
 
         this._label = new St.Label({style_class: 'command-hud-text', y_align: Clutter.ActorAlign.CENTER});
         this._label.clutter_text.set_ellipsize(Pango.EllipsizeMode.START);
         this._label.clutter_text.set_single_line_mode(true);
-        this._box.add_child(this._label);
+        this._content.add_child(this._label);
 
-        this._box.opacity = 0;
         Main.layoutManager.uiGroup.add_child(this._box);
         // Above everything, but never grabbing anything.
         Main.layoutManager.uiGroup.set_child_above_sibling(this._box, null);
@@ -88,11 +115,47 @@ export class Hud {
             this._box.destroy();
             this._box = null;
         }
+        this._content = null;
         this._icon = null;
         this._label = null;
         this._bars = [];
         this._heights.fill(BAR_MIN);
         this._level = 0;
+        this._leaving = false;
+    }
+
+    // The bar's own background, so the capsule reads as a part of it. A
+    // see-through bar (transparency extensions) gets plain black, the colour
+    // of the bar they are imitating anyway.
+    _panelColor() {
+        try {
+            const c = Main.panel.get_theme_node().get_background_color();
+            const [r, g, b, a] = [c.red, c.green, c.blue, c.alpha].map(v => v <= 1 ? Math.round(v * 255) : Math.round(v));
+            if (a >= PANEL_OPAQUE_ALPHA)
+                return `rgb(${r},${g},${b})`;
+        } catch {
+            // fall through
+        }
+        return 'rgb(0,0,0)';
+    }
+
+    // -- geometry --------------------------------------------------------
+
+    // Natural size of the capsule: that of its content.
+    _natural() {
+        const [, w] = this._content.get_preferred_width(-1);
+        const [, h] = this._content.get_preferred_height(-1);
+        return [Math.ceil(w), Math.ceil(h) + (this._island ? ISLAND_OVERLAP : 0)];
+    }
+
+    // Where the capsule hangs from: centred under the primary monitor's bar.
+    _islandAnchor(width) {
+        const lm = Main.layoutManager;
+        const monitor = lm.primaryMonitor;
+        const panel = lm.panelBox;
+        const bottom = panel ? panel.y + panel.height : (monitor?.y ?? 0);
+        const cx = monitor ? monitor.x + monitor.width / 2 : width / 2;
+        return [Math.round(cx - width / 2), Math.round(bottom - ISLAND_OVERLAP)];
     }
 
     _place(animate = false) {
@@ -102,27 +165,24 @@ export class Hud {
             this._placeAtCursor();
     }
 
-    // Centred under the top bar of the primary monitor. The box keeps its
-    // natural width; when the text changes, the move to the new centre is
-    // eased so the capsule appears to grow from both ends.
+    // Island: ease the capsule to its new natural size, keeping it centred,
+    // so a longer text makes it grow from both ends.
     _placeIsland(animate) {
-        const lm = Main.layoutManager;
-        const monitor = lm.primaryMonitor;
-        if (!monitor)
-            return;
-        const [, natWidth] = this._box.get_preferred_width(-1);
-        const x = Math.round(monitor.x + (monitor.width - natWidth) / 2);
-        const y = Math.round(monitor.y + (Main.panel?.height ?? 0) + ISLAND_GAP);
-        this._box.remove_transition('x');
-        if (animate && this._box.visible && this._box.opacity > 0 && Math.abs(this._box.x - x) > 1) {
-            this._box.set_y(y);
-            this._box.ease({x, duration: RESIZE_MS, mode: Clutter.AnimationMode.EASE_OUT_QUAD});
+        const [w, h] = this._natural();
+        const [x, y] = this._islandAnchor(w);
+        for (const prop of ['x', 'width', 'height'])
+            this._box.remove_transition(prop);
+        this._box.set_y(y);
+        if (animate && this._box.opacity > 0 && !this._leaving) {
+            this._box.ease({x, width: w, height: h, duration: RESIZE_MS, mode: Clutter.AnimationMode.EASE_OUT_CUBIC});
         } else {
             this._box.set_position(x, y);
+            this._box.set_size(w, h);
         }
     }
 
-    // Below the text cursor when the application reports it, else the pointer.
+    // Cursor: below the text cursor when the application reports it, else
+    // the pointer, kept inside its monitor.
     _placeAtCursor() {
         const rect = Main.inputMethod?._cursorRect;
         let x, y;
@@ -138,8 +198,7 @@ export class Hud {
         const monitor = (lm.monitors ?? []).find(m =>
             x >= m.x && x < m.x + m.width && y >= m.y && y < m.y + m.height) ??
             lm.primaryMonitor;
-        const [, natWidth] = this._box.get_preferred_width(-1);
-        const [, natHeight] = this._box.get_preferred_height(-1);
+        const [natWidth, natHeight] = this._natural();
         if (monitor) {
             x = Math.max(monitor.x, Math.min(x, monitor.x + monitor.width - natWidth));
             if (y + natHeight > monitor.y + monitor.height)
@@ -149,31 +208,58 @@ export class Hud {
         this._box.set_position(Math.round(x), Math.round(y));
     }
 
-    // The island slides down from behind the top bar.
+    // -- entrance / exit -------------------------------------------------
+
+    // Island: a small bump swells out of the bar into the full capsule, the
+    // content fading in once there is room for it. Cursor: a plain fade.
     _enter() {
+        this._leaving = false;
+        this._box.remove_all_transitions();
+        this._content.remove_all_transitions();
         if (!this._island) {
             this._box.opacity = 255;
+            this._content.opacity = 255;
             return;
         }
-        const [, natHeight] = this._box.get_preferred_height(-1);
-        this._box.translation_y = -(natHeight + ISLAND_GAP);
-        this._box.opacity = 0;
+        const [w, h] = this._natural();
+        const [x, y] = this._islandAnchor(w);
+        const seedW = Math.min(ISLAND_SEED_W, w);
+        this._box.set_position(Math.round(x + (w - seedW) / 2), y);
+        this._box.set_size(seedW, 0);
+        this._box.opacity = 255;
+        this._content.opacity = 0;
         this._box.ease({
-            translation_y: 0,
-            opacity: 255,
+            x, width: w, height: h,
             duration: ISLAND_IN_MS,
             mode: Clutter.AnimationMode.EASE_OUT_BACK,
         });
+        this._content.ease({
+            opacity: 255,
+            duration: CONTENT_FADE_MS,
+            delay: ISLAND_IN_MS - CONTENT_FADE_MS - 60,
+            mode: Clutter.AnimationMode.EASE_OUT_QUAD,
+        });
     }
 
-    // ... and back up behind it.
+    // ... and back into the bar.
     _leave(onComplete) {
-        const [, natHeight] = this._box.get_preferred_height(-1);
+        this._leaving = true;
+        this._box.remove_all_transitions();
+        this._content.remove_all_transitions();
+        if (!this._island) {
+            this._box.ease({opacity: 0, duration: 150, mode: Clutter.AnimationMode.EASE_OUT_QUAD, onComplete});
+            return;
+        }
+        const w = this._box.width;
+        const seedW = Math.min(ISLAND_SEED_W, w);
+        this._content.ease({opacity: 0, duration: CONTENT_FADE_MS * 0.6, mode: Clutter.AnimationMode.EASE_IN_QUAD});
         this._box.ease({
-            translation_y: this._island ? -(natHeight + ISLAND_GAP) : 0,
-            opacity: 0,
-            duration: this._island ? ISLAND_OUT_MS : 150,
-            mode: Clutter.AnimationMode.EASE_IN_QUAD,
+            x: Math.round(this._box.x + (w - seedW) / 2),
+            width: seedW,
+            height: 0,
+            duration: ISLAND_OUT_MS,
+            delay: 40,
+            mode: Clutter.AnimationMode.EASE_IN_CUBIC,
             onComplete,
         });
     }
@@ -183,23 +269,17 @@ export class Hud {
     show(status, pseudo = '') {
         this._cancelHide();
         this._build();
-        // A fade-out may still be running from the previous hide(): its
-        // onComplete would destroy the box we are about to use.
-        const fresh = this._box.opacity === 0 && !this._box.get_transition('opacity');
-        const entering = this._box.get_transition('translation_y') && this._box.translation_y < 0;
-        this._box.remove_all_transitions();
+        const fresh = this._box.opacity === 0;
+        const leaving = this._leaving;
         this._setIconState(pseudo);
         this._setText(status, 'hint');
-        if (fresh) {
-            this._place();
+        if (fresh || leaving) {
+            // New, or caught on its way out: (re)open from the bar.
+            if (!this._island)
+                this._place();
             this._enter();
         } else {
-            // Was fading out, or already shown: bring it back where it is.
             this._place(true);
-            this._box.translation_y = 0;
-            this._box.opacity = 255;
-            if (entering)
-                this._enter();
         }
     }
 

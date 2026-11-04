@@ -13,6 +13,7 @@ export default class CommandHoldExtension extends Extension {
         this._settings = this.getSettings();
         this._bound = false;
         this._commander = new Commander(this._settings, `${this.path}/icons/command-hold-symbolic.svg`, _);
+        this._commander.warmUp();
         this._bind();
 
         this._indicator = null;

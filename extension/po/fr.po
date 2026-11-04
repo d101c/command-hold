@@ -166,6 +166,9 @@ msgstr "En cours…"
 msgid "Not a GNOME action, and the local LLM is off — “%s”"
 msgstr "Pas une action GNOME, et le LLM local est éteint — « %s »"
 
+msgid "Not a GNOME action, and Ollama took too long — “%s”"
+msgstr "Pas une action GNOME, et Ollama a mis trop longtemps — « %s »"
+
 msgid "Not a GNOME action, and Ollama is not answering — “%s”"
 msgstr "Pas une action GNOME, et Ollama ne répond pas — « %s »"
 

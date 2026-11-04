@@ -30,10 +30,16 @@ class Interpreter:
         source = 'rules'
         if intent is None:
             if self.use_llm:
-                intent = self._llm_fn(text, url=self.llm_url, model=self.llm_model)
+                try:
+                    intent = self._llm_fn(text, url=self.llm_url, model=self.llm_model)
+                except llm.Timeout:
+                    intent = None
+                    timed_out = True
+                else:
+                    timed_out = False
                 source = 'llm'
                 if intent is None:
-                    intent = {'action': 'unknown', 'reason': 'llm-unavailable'}
+                    intent = {'action': 'unknown', 'reason': 'llm-timeout' if timed_out else 'llm-unavailable'}
                     source = 'none'
                 elif intent.get('action') == 'open_app':
                     # The model names the app; the rules know what is installed.

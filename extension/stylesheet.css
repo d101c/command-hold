@@ -1,19 +1,23 @@
-/* Same family as Accent Hold and Voice Hold: dark pill, 12px radius. */
-.command-hud {
+/* Same family as Accent Hold and Voice Hold. The capsule (.command-hud) is
+   animated and clips; the content box carries the padding and spacing. */
+.command-hud { color: #fff; }
+.command-hud-content { padding: 8px 12px; spacing: 10px; }
+
+/* Next to the cursor: the dark pill of Voice Hold. */
+.command-hud-cursor {
     background-color: rgba(40,40,40,0.95);
     border-radius: 12px;
-    padding: 8px 12px;
-    spacing: 10px;
-    color: #fff;
 }
-/* Island: a black capsule hanging under the top bar, Dynamic Island style. */
+
+/* Island: part of the top bar. Same background as the bar (set inline from
+   its theme), square top, rounded bottom, a soft shadow on the desktop. */
 .command-hud-island {
-    background-color: rgba(0,0,0,0.92);
-    border-radius: 22px;
-    padding: 10px 18px;
-    spacing: 12px;
-    box-shadow: 0 6px 18px rgba(0,0,0,0.45);
+    background-color: #000;
+    border-radius: 0 0 22px 22px;
+    box-shadow: 0 5px 16px rgba(0,0,0,0.45);
 }
+.command-hud-content-island { padding: 10px 20px 11px 20px; spacing: 12px; }
+
 .command-hud-icon { icon-size: 16px; color: #ddd; }
 .command-hud-icon:loading { color: #999; }
 .command-hud-icon:listening { color: #3584e4; }

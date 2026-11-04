@@ -72,9 +72,27 @@ Examples:
 
 DEFAULT_URL = 'http://127.0.0.1:11434'
 DEFAULT_MODEL = 'qwen3:1.7b'
-TIMEOUT_S = 8.0          # once the model is loaded
+TIMEOUT_S = 30.0         # once the model is loaded (the system prompt may still have to be read)
 COLD_TIMEOUT_S = 90.0    # first call: the weights are read from disk
 KEEP_ALIVE = '30m'
+WARM_UP_TEXT = 'bonjour'
+
+
+class Timeout(Exception):
+    """Ollama was reached but did not answer in time."""
+
+
+def _payload(model, text, num_predict=160):
+    return {
+        'model': model,
+        'messages': [{'role': 'system', 'content': SYSTEM},
+                     {'role': 'user', 'content': text}],
+        'format': SCHEMA,
+        'stream': False,
+        'think': False,
+        'keep_alive': KEEP_ALIVE,
+        'options': {'temperature': 0, 'num_thread': 4, 'num_predict': num_predict},
+    }
 
 
 def _post(url, payload, timeout, opener=None):
@@ -86,25 +104,21 @@ def _post(url, payload, timeout, opener=None):
 
 
 def interpret(text, *, url=DEFAULT_URL, model=DEFAULT_MODEL, timeout=None, opener=None):
-    """Return the parsed intent dict, or None when Ollama is unreachable, slow
-    or answers garbage. Without an explicit timeout, a model that is not
-    loaded yet gets the cold one."""
+    """Return the parsed intent dict, or None when Ollama is unreachable or
+    answers garbage. Raises Timeout when it is reached but too slow. Without
+    an explicit timeout, a model that is not loaded yet gets the cold one."""
     if timeout is None:
         timeout = TIMEOUT_S if loaded(url, model, opener=opener) else COLD_TIMEOUT_S
-    payload = {
-        'model': model,
-        'messages': [{'role': 'system', 'content': SYSTEM},
-                     {'role': 'user', 'content': text}],
-        'format': SCHEMA,
-        'stream': False,
-        'think': False,
-        'keep_alive': KEEP_ALIVE,
-        'options': {'temperature': 0, 'num_thread': 4, 'num_predict': 160},
-    }
     try:
-        data = _post(f'{url.rstrip("/")}/api/chat', payload, timeout, opener)
+        data = _post(f'{url.rstrip("/")}/api/chat', _payload(model, text), timeout, opener)
         content = data['message']['content']
-    except (urllib.error.URLError, OSError, KeyError, TypeError, ValueError):
+    except TimeoutError:
+        raise Timeout()
+    except urllib.error.URLError as e:
+        if isinstance(e.reason, TimeoutError) or 'timed out' in str(e.reason):
+            raise Timeout()
+        return None
+    except (OSError, KeyError, TypeError, ValueError):
         return None
     return parse(content)
 
@@ -157,11 +171,14 @@ def loaded(url=DEFAULT_URL, model=DEFAULT_MODEL, timeout=1.0, opener=None):
 
 
 def warm_up(url=DEFAULT_URL, model=DEFAULT_MODEL, opener=None):
-    """Load the model now so the first real request does not pay the cold
-    start. Returns True when the model answered."""
+    """Load the model and run the system prompt through it once, so the first
+    real request only pays for its own few words: Ollama keeps the prompt
+    prefix in its cache as long as the model stays loaded. (A request with an
+    empty prompt loads the weights but leaves the 3 kB system prompt to be
+    read on the first command, which took 23 s on a laptop CPU.) Returns True
+    when the model answered."""
     try:
-        _post(f'{url.rstrip("/")}/api/generate',
-              {'model': model, 'prompt': '', 'keep_alive': KEEP_ALIVE, 'options': {'num_thread': 4}},
+        _post(f'{url.rstrip("/")}/api/chat', _payload(model, WARM_UP_TEXT, num_predict=8),
               COLD_TIMEOUT_S, opener)
         return True
     except (urllib.error.URLError, OSError, ValueError):

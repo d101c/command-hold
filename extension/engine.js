@@ -24,6 +24,7 @@ const IFACE_XML = `
       <arg type="s" name="job_id" direction="out"/>
     </method>
     <method name="Status"><arg type="a{sv}" name="status" direction="out"/></method>
+    <method name="Prepare"/>
     <method name="ReloadApps"/>
     <method name="Quit"/>
     <signal name="Job">
@@ -33,7 +34,9 @@ const IFACE_XML = `
 </node>`;
 
 const Proxy = Gio.DBusProxy.makeProxyWrapper(IFACE_XML);
-const INTERPRET_TIMEOUT_MS = 15000;
+// Cold start of the model can take 90 s on the engine side; the pill says
+// "Thinking…" meanwhile.
+const INTERPRET_TIMEOUT_MS = 100000;
 const CALL_TIMEOUT_MS = 10000;
 
 export class EngineClient {
@@ -111,6 +114,12 @@ export class EngineClient {
                     intent[k] = v.deepUnpack();
                 return intent;
             });
+    }
+
+    // Load the model and prime its prompt cache while the user is talking.
+    // Starts the engine when it is not running. Fire and forget.
+    prepare() {
+        return this._call('Prepare', null, CALL_TIMEOUT_MS);
     }
 
     run(command, cwd) {

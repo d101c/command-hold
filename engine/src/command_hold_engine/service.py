@@ -53,20 +53,32 @@ class CommandHoldInterface(ServiceInterface):
         self.quit_requested = False
         self._idle_handle = None
         self._touch()
+        self._warming = False
+        self._primed = False
         if warm_up:
             # Read the weights while the user is still talking: the first open
             # request then answers in seconds instead of tens of seconds.
             self._loop.run_in_executor(self._executor, self._warm_up)
 
     def _warm_up(self):
-        if not self._interpreter.use_llm:
+        if not self._interpreter.use_llm or self._warming:
             return
-        from . import ollama
-        if not llm.ping(self._interpreter.llm_url)[0] and ollama.bundled_binary():
-            ollama.ensure(self._interpreter.llm_url)
-        ok, present = llm.ping(self._interpreter.llm_url, self._interpreter.llm_model)
-        if ok and present and not llm.loaded(self._interpreter.llm_url, self._interpreter.llm_model):
-            llm.warm_up(self._interpreter.llm_url, self._interpreter.llm_model)
+        self._warming = True
+        try:
+            from . import ollama
+            if not llm.ping(self._interpreter.llm_url)[0] and ollama.bundled_binary():
+                ollama.ensure(self._interpreter.llm_url)
+            ok, present = llm.ping(self._interpreter.llm_url, self._interpreter.llm_model)
+            if not ok or not present:
+                return
+            # A loaded model may still have an empty prompt cache (loaded by
+            # someone else, or unloaded and reloaded by Ollama): prime it once
+            # per load.
+            if self._primed and llm.loaded(self._interpreter.llm_url, self._interpreter.llm_model):
+                return
+            self._primed = llm.warm_up(self._interpreter.llm_url, self._interpreter.llm_model)
+        finally:
+            self._warming = False
 
     # -- idle ---------------------------------------------------------------
 
@@ -125,6 +137,13 @@ class CommandHoldInterface(ServiceInterface):
             'apps': Variant('i', len(self._interpreter._rules.index.apps)),
             'jobs': Variant('i', len(self._runner.jobs)),
         }
+
+    @method()
+    def Prepare(self):
+        """Load the model and prime the prompt cache in the background, while
+        the user is still talking. Returns at once."""
+        self._touch()
+        self._loop.run_in_executor(self._executor, self._warm_up)
 
     @method()
     async def EnsureOllama(self) -> 'b':

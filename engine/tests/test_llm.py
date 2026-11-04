@@ -109,3 +109,39 @@ def test_warm_timeout_when_loaded():
     llm.interpret('verrouille', opener=opener)
     assert seen[1] == ('chat', llm.TIMEOUT_S)
     assert llm.loaded(opener=opener) is True
+
+
+def test_warm_up_runs_the_system_prompt_through_chat():
+    seen = []
+
+    def opener(req, timeout=None):
+        seen.append((req.full_url.rsplit('/', 1)[-1], json.loads(req.data.decode())))
+        return FakeResponse(json.dumps({'message': {'content': '{"action":"unknown"}'}}).encode())
+    assert llm.warm_up(opener=opener) is True
+    path, payload = seen[0]
+    assert path == 'chat'
+    assert payload['messages'][0] == {'role': 'system', 'content': llm.SYSTEM}
+    assert payload['format'] == llm.SCHEMA
+    assert payload['options']['num_predict'] <= 16
+
+
+def test_interpret_raises_timeout_when_ollama_is_slow():
+    import urllib.error
+
+    def opener(req, timeout=None):
+        if req.full_url.endswith('/api/ps'):
+            return FakeResponse(json.dumps({'models': [{'name': 'qwen3:1.7b'}]}).encode())
+        raise urllib.error.URLError(TimeoutError('timed out'))
+    import pytest
+    with pytest.raises(llm.Timeout):
+        llm.interpret('x', opener=opener)
+
+
+def test_interpreter_reports_llm_timeout(fake_apps):
+    from command_hold_engine.interpreter import Interpreter
+
+    def slow(text, **kw):
+        raise llm.Timeout()
+    it = Interpreter(apps=fake_apps, use_llm=True, llm_fn=slow)
+    out = it.interpret('optimise mon ordinateur')
+    assert out['action'] == 'unknown' and out['reason'] == 'llm-timeout'
