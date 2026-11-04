@@ -153,11 +153,14 @@ export class Hud {
         this._result.clutter_text.set_line_wrap(true);
         this._result.clutter_text.set_line_wrap_mode(Pango.WrapMode.WORD_CHAR);
         this._result.clutter_text.set_ellipsize(Pango.EllipsizeMode.NONE);
-        this._result.clutter_text.set_selectable(true);
+        // A scroll view's child must be scrollable (St.BoxLayout is; a label is not).
+        const scrolled = new St.BoxLayout({x_expand: true});
+        setVertical(scrolled);
+        scrolled.add_child(this._result);
         if (this._scroll.set_child)
-            this._scroll.set_child(this._result);
+            this._scroll.set_child(scrolled);
         else
-            this._scroll.add_actor(this._result);
+            this._scroll.add_actor(scrolled);
         this._content.add_child(this._scroll);
 
         Main.layoutManager.uiGroup.add_child(this._box);
@@ -458,7 +461,8 @@ export class Hud {
     }
 
     _breathe() {
-        if (!this._icon || !this._icon.has_style_pseudo_class('loading'))
+        // Off stage, an ease completes at once: this would recurse forever.
+        if (!this._icon || !this._icon.has_style_pseudo_class('loading') || !this._icon.get_stage())
             return;
         const dim = this._icon.opacity > 150;
         this._icon.ease({
@@ -512,7 +516,8 @@ export class Hud {
         if (this._decayId)
             return;
         this._decayId = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 60, () => {
-            if (!this._box) {
+            // The stage may have taken the actors with it (shell exit).
+            if (!this._box || !this._box.get_stage()) {
                 this._decayId = 0;
                 return GLib.SOURCE_REMOVE;
             }
